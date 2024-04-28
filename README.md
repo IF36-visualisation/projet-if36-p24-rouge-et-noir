@@ -105,3 +105,4 @@ Nous avons obtenu des informations complètes sur les transactions de vente dans
 2. **Part de marché et potentiel de croissance** : En analysant les données de ventes, vous pouvez comprendre la part de marché et le potentiel de croissance de l’entreprise sur les deux marchés. Cela permet d’identifier et de prioriser les opportunités d’expansion du marché.
 3. **Environnement économique et comportement des consommateurs** : En comparant les données de ventes de deux pays, nous pouvons comprendre l'environnement économique, le niveau de revenu des consommateurs et le pouvoir d'achat des deux pays, fournissant ainsi une référence pour la formulation de stratégies de marché.
 
+test
