@@ -353,7 +353,7 @@ server <- function(input, output) {
       )
   })
   
-  # ############# The server part of Wuyuan
+  # ############# The server part of Wuyuan START
   output$plotPriceSales <- renderPlot({
     filtered_data = product_us %>%
       filter(profit >= input$profitSlider[1] & profit <= input$profitSlider[2]) %>%
@@ -391,7 +391,7 @@ server <- function(input, output) {
       ylim(-250, 250) 
   })
   
-  # #############
+  # ############# The server part of Wuyuan END
 }
 
 shinyApp(ui, server)
