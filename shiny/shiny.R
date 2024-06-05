@@ -7,10 +7,10 @@ library(dplyr)
 library(plotly)
 library(readr)
 
-data_usa_path <- "~/IF29/superstore.csv"
+data_usa_path <- "../data/superstore.csv"
 data_usa <- read_csv(data_usa_path)
 
-data_mya_path <- "~/IF29/WalmartSQL repository.csv"
+data_mya_path <- "../data/WalmartSQL repository.csv"
 data_mya <- read_delim(data_mya_path, delim = ";", escape_double = FALSE, trim_ws = TRUE)
 
 # ###########################################################
@@ -111,13 +111,54 @@ rfm_to_customer_segment <- function(rfm_label) {
 
 rfm_data$segment <- rfm_to_customer_segment(rfm_data$segment)
 
+
+# ############# The data cleaning part of Wuyuan START
+
+product_us = data_usa %>%
+  select(`Product ID`, Category, `Sub-Category`, Sales, Quantity, Profit) %>% #choose the concerned fields
+  group_by(Category, `Sub-Category`, `Product ID`,Profit) %>% #group all the lines by the 3 fields
+  summarise(quantity = sum(Quantity, na.rm = TRUE),
+            total = sum(Sales, na.rm = TRUE),
+            profit = sum(Profit, na.rm = TRUE),
+            unit_price = total / quantity) %>% #delete the null cell and calculate the unit_price of a product, the sales and the total income
+  ungroup() %>%
+  transmute(product_id = `Product ID`,
+            category = `Category`,
+            sub_category = `Sub-Category`,
+            unit_price = unit_price,
+            quantity = quantity,
+            total = total,
+            profit = Profit) #form a new table and use it later
+#include the profit, and then compare it with the profit in the table mya
+
+
+
+product_mya = data_mya %>%
+  select(product_line, invoice_id, unit_price, quantity, total, gross_income, gross_margin_pct) %>% #choose the concerned fields
+  group_by(product_line, invoice_id, unit_price) %>% #group all the lines by the 3 fields
+  summarise(quantity = sum(quantity, na.rm = TRUE), 
+            total = sum(total, na.rm = TRUE), 
+            profit = gross_income * gross_margin_pct) %>% #"na.rm" deletes the null cell and calculate the total income and the sales  
+  ungroup() %>%
+  transmute(product_id = invoice_id,
+            category = product_line,
+            unit_price = unit_price,
+            quantity = quantity,
+            total = total,
+            profit = profit
+  ) #form a new table and use it later
+
+# ############# The data cleaning part of Wuyuan END
+
 # ###########################################################
 
 ui <- dashboardPage(
   dashboardHeader(title = "Visualisations des Données du Marché"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("RFM", tabName = "rfm_transactions", icon = icon("bar-chart"))
+      menuItem("RFM", tabName = "rfm_transactions", icon = icon("bar-chart")),
+      menuItem("Price and sales", tabName = "price_sales_us", icon = icon("bar-chart")), #Wuyuan
+      menuItem("Price and profit", tabName = "price_profit_us_mya", icon = icon("usd"))  #Wuyuan
     )
   ),
   dashboardBody(
@@ -242,7 +283,48 @@ ui <- dashboardPage(
     </p>
                           </div>")
                 )
+              )),
+      
+      # ############# The ui part of Wuyuan START
+      
+      tabItem(tabName = "price_sales_us",
+              fluidRow(
+                box(title = "The relation between the sales and the price in US", width = 12, status = "primary", solidHeader = TRUE, 
+                    plotOutput("plotPriceSales")),
+                sliderInput("profitSlider", "Select Profit Range:",
+                            min = min(product_us$profit, na.rm = TRUE),
+                            max = max(product_us$profit, na.rm = TRUE),
+                            value = range(product_us$profit, na.rm = TRUE),
+                            step = 100),
+                checkboxGroupInput("categoryCheckbox", "Select Categories:",
+                                   choices = unique(product_us$category),
+                                   selected = unique(product_us$category)),
+                checkboxGroupInput("subCategoryCheckbox", "Select Categories:",
+                                   choices = unique(product_us$sub_category),
+                                   selected = unique(product_us$sub_category))
+              )),
+      tabItem(tabName = "price_profit_us_mya",
+              fluidRow(
+                box(title = "The distribution of the unit_price and the profit in the 2 countries", width = 12, status = "primary", solidHeader = TRUE, 
+                    plotOutput("plotPriceProfit")),
+                sliderInput("salesSliderUS", "Select Sales Range of US:",
+                            min = floor(min(product_us$quantity, na.rm = TRUE)),
+                            max = ceiling(max(product_us$quantity, na.rm = TRUE)),
+                            value = range(product_us$quantity, na.rm = TRUE),
+                            step = 1),
+                sliderInput("salesSliderMYA", "Select Sales Range of MYA:",
+                            min = floor(min(product_mya$quantity, na.rm = TRUE)),
+                            max = ceiling(max(product_mya$quantity, na.rm = TRUE)),
+                            value = range(product_mya$quantity, na.rm = TRUE),
+                            step = 1),
+                checkboxGroupInput("categoryCheckboxUS", "Select Category (US):",
+                                   choices = unique(product_us$category),
+                                   selected = unique(product_us$category)),
+                checkboxGroupInput("categoryCheckboxMYA", "Select Category (MYA):",
+                                   choices = unique(product_mya$category),
+                                   selected = unique(product_mya$category))
               ))
+      # ############# The server part of Wuyuan END
     )
   )
 )
@@ -270,6 +352,46 @@ server <- function(input, output) {
         title = "Model RFM"
       )
   })
+  
+  # ############# The server part of Wuyuan
+  output$plotPriceSales <- renderPlot({
+    filtered_data = product_us %>%
+      filter(profit >= input$profitSlider[1] & profit <= input$profitSlider[2]) %>%
+      filter(category %in% input$categoryCheckbox) %>%
+      filter(sub_category %in% input$subCategoryCheckbox)
+    
+    ggplot(filtered_data, aes(x = unit_price, y = quantity)) +
+      geom_point(color = "black") +
+      labs(title = "The relation between the sales and the price (US)",
+           x = "product_unit_price ($)",
+           y = "sales (pcs)") +
+      theme_minimal() +
+      scale_x_continuous(breaks = seq(0, 3500, by = 200)) #Modify the x-axis scale range and interval, to make it easier to read.
+  })
+  
+  output$plotPriceProfit <- renderPlot({
+    filtered_us <- product_us %>%
+      filter(quantity >= input$salesSliderUS[1] & quantity <= input$salesSliderUS[2])  %>%
+      filter(category %in% input$categoryCheckboxUS)
+    
+    filtered_mya <- product_mya %>%
+      filter(quantity >= input$salesSliderMYA[1] & quantity <= input$salesSliderMYA[2]) %>%
+      filter(category %in% input$categoryCheckboxMYA)  
+    
+    ggplot()+
+      geom_point(data = filtered_us, aes(x = unit_price, y = profit, color = 'US'))+
+      geom_point(data = filtered_mya, aes(x = unit_price, y = profit, color = 'MYA'))+
+      labs(title = "The distribution of the unit_price and the profit in 2 countries (US and MYA)",
+           x = "product_unit_price",
+           y = "profit") +
+      geom_smooth(data = product_us, aes(x = unit_price, y = profit), method = "lm", se = FALSE, color = "blue") +
+      geom_smooth(data = product_mya, aes(x = unit_price, y = profit), method = "lm", se = FALSE, color = "red") +
+      theme_minimal() +
+      xlim(0, 300) +  # limit the range of x
+      ylim(-250, 250) 
+  })
+  
+  # #############
 }
 
 shinyApp(ui, server)
