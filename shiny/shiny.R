@@ -158,7 +158,8 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem("RFM", tabName = "rfm_transactions", icon = icon("bar-chart")),
       menuItem("Price and sales", tabName = "price_sales_us", icon = icon("bar-chart")), #Wuyuan
-      menuItem("Price and profit", tabName = "price_profit_us_mya", icon = icon("usd"))  #Wuyuan
+      menuItem("Price and profit", tabName = "price_profit_us_mya", icon = icon("usd")),  #Wuyuan
+      menuItem("Montants Moyens des Transactions", tabName = "avg_transactions", icon = icon("bar-chart")) # czy
     )
   ),
   dashboardBody(
@@ -323,8 +324,25 @@ ui <- dashboardPage(
                 checkboxGroupInput("categoryCheckboxMYA", "Select Category (MYA):",
                                    choices = unique(product_mya$category),
                                    selected = unique(product_mya$category))
+              )),
+      
+      # ############# The new ui part added by czy START
+      
+      tabItem(tabName = "avg_transactions",
+              fluidRow(
+                box(title = "Montant Moyen des Transactions par Sous-catégorie", width = 12, status = "primary", solidHeader = TRUE, 
+                    plotlyOutput("plotAvgTransactions")),
+                box(width = 12, 
+                    checkboxGroupInput("categoryFilter", "Select Categories:", choices = unique(data_usa$`Sub-Category`), selected = unique(data_usa$`Sub-Category`)),
+                    HTML("<div style='padding: 15px;'>
+                            <h4>Contexte:</h4>
+                            <p>La catégorie des copieurs, ayant le montant moyen de transaction le plus élevé, reflète une demande continue pour des équipements de bureau efficaces et modernes, particulièrement dans un contexte où le travail à distance et la digitalisation des espaces de travail s'accélèrent. Cela pourrait indiquer une augmentation des investissements des entreprises pour améliorer l'efficacité et l'automatisation des bureaux.</p>
+                            <h4>Situation Actuelle:</h4>
+                            <p>Bien que les catégories 'Copieurs' et 'Machines' présentent des montants élevés, les articles de bureau plus courants tels que 'Fournitures' et 'Étiquettes' montrent des montants plus faibles, probablement en raison de leur bas prix unitaire et de leur achat fréquent, ce qui démontre une demande stable pour ces consommables dans l'environnement de bureau.</p>
+                          </div>")
+                )
               ))
-      # ############# The server part of Wuyuan END
+      # ############# The new ui part added by czy END
     )
   )
 )
@@ -392,9 +410,27 @@ server <- function(input, output) {
   })
   
   # ############# The server part of Wuyuan END
+  
+  # ############# The new server part added by czy START
+  filtered_data <- reactive({
+    data_usa %>% 
+      filter(`Sub-Category` %in% input$categoryFilter)
+  })
+  
+  output$plotAvgTransactions <- renderPlotly({
+    plot_data <- filtered_data() %>%
+      group_by(`Sub-Category`) %>%
+      summarise(Average_Transaction_Amount = mean(Sales, na.rm = TRUE)) %>%
+      arrange(desc(Average_Transaction_Amount))
+    
+    p <- ggplot(plot_data, aes(x = reorder(`Sub-Category`, -Average_Transaction_Amount), y = Average_Transaction_Amount)) +
+      geom_bar(stat = "identity", fill = "blue") +
+      labs(title = "Average Transaction Amount by Sub-Category", x = "Sub-Category", y = "Average Transaction Amount (USD)") +
+      theme(axis.text.x = element_text(angle = 65, vjust = 0.6))
+    
+    ggplotly(p)
+  })
+  # ############# The server part added by czy END
 }
 
 shinyApp(ui, server)
-
-
-
