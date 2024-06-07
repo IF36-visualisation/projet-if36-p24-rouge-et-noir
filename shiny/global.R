@@ -82,7 +82,7 @@ rfm_data <- client_usa %>%
 
 rfm_data <- rfm_data %>%
   mutate(
-    r_score = ntile(recency, 2),
+    r_score = ntile(-recency, 2),
     f_score = ntile(frequency, 2),
     m_score = ntile(monetary, 2)
   )
@@ -94,14 +94,14 @@ rfm_data <- rfm_data %>%
 
 rfm_to_customer_segment <- function(rfm_label) {
   segment_map <- c(
-    "R1F1M1" = "New Customers",
-    "R1F1M2" = "Important Deepening Customers", 
-    "R1F2M1" = "Potential customers",
-    "R1F2M2" = "Important Value Customers",
-    "R2F1M1" = "Churned Customers",
-    "R2F1M2" = "Important Retention Customers",
-    "R2F2M1" = "Average Maintenance Customers",
-    "R2F2M2" = "Important Win-Back Customers"
+    "R2F1M1" = "New Customers",
+    "R2F1M2" = "Important Deepening Customers", 
+    "R2F2M1" = "Potential customers",
+    "R2F2M2" = "Important Value Customers",
+    "R1F1M1" = "Churned Customers",
+    "R1F1M2" = "Important Retention Customers",
+    "R1F2M1" = "Average Maintenance Customers",
+    "R1F2M2" = "Important Win-Back Customers"
   )
   
   customer_segment <- segment_map[rfm_label]

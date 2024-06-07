@@ -144,7 +144,10 @@ Nous avons obtenu des informations complètes sur les transactions de vente dans
 
    La relation entre le montant de la commande et le nombre d'articles dans la commande peut refléter les caractéristiques du comportement d’achat du client. L'analyse de ces indicateurs peut aider les entreprises à comprendre les caractéristiques et les tendances du comportement d'achat des clients, orientant ainsi les stratégies de vente et les activités marketing de l'entreprise. Par exemple, s'il existe une forte corrélation positive entre le montant de la commande et le nombre de produits, l'entreprise peut prendre certaines mesures pour encourager les clients à acheter davantage de produits, telles que la lancement de réductions sur les forfaits, les ventes combinées, etc. Si le taux combiné est faible, cela peut accroître la volonté des clients d'acheter plusieurs produits par le biais de ventes liées, d'activités promotionnelles, etc., augmentant ainsi les ventes.
 
-2. **Dimension client** : Quel est le prix unitaire par client ? Quelle est la relation entre le montant de la consommation du client et le nombre de pièces consommées ? En utilisant le modèle RFM pour stratifier les utilisateurs, pouvons-nous voir le cycle de vie du client et le cycle d'achat ?
+2. **Dimension client** : 
+  - Quelles sont les unités de clients annuels moyens des supermarchés aux États-Unis et au Myanmar ?
+  - Quelle est la relation entre le nombre d’articles achetés par un client en une seule transaction et le prix total ?
+  - Comment classer les clients en fonction de leur comportement de consommation et formuler des stratégies correspondantes ?
 
    En tant que modèle d'analyse du comportement de consommation dans le domaine de la gestion de la relation client, le modèle RFM comprend trois variables : le moment de l'achat récent R (Récence), la fréquence d'achat F (Fréquence) et le montant de l'achat M (Monétaire). En analysant le nombre de jours dans l'intervalle de temps, plus la valeur est petite, plus la probabilité d'achat répété du client est grande et plus la valeur du client est élevée. F représente le nombre de fois que le client achète des marchandises au cours de la période. Plus l'achat est élevé. fréquence, plus le client est fidèle. M représente le montant total de l'achat. Le montant de l'achat et la fidélité du client sont également directement proportionnels, de sorte que la valeur du client peut être obtenue en analysant le score RFM.
 
@@ -170,12 +173,12 @@ Nous avons obtenu des informations complètes sur les transactions de vente dans
 
 
 ```{r include = FALSE}
-data_usa <- read_csv("superstore.csv")
+data_usa <- read_csv("../data/superstore.csv")
 head(data_usa)
 ```
 
 ```{r include = FALSE}
-data_mya <- read_delim("WalmartSQL repository.csv", 
+data_mya <- read_delim("../data/WalmartSQL repository.csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)
 head(data_mya)
 ```
@@ -310,10 +313,6 @@ ggplot(market_share_mya, aes(x = "", y = Market_Share, fill = product_line)) +
 
 ## 2.2 Dimension du client
 
-### 2.2.1 Extraire les données relatives aux clients
-
-#### 2.2.1.1 Fonction d'assistance
-
 ```{r}
 # Obtenir le quart
 get_custom_quarter <- function(date) {
@@ -336,11 +335,7 @@ get_custom_week <- function(date) {
   week_of_year <- strftime(date, format = "%U")
   return(week_of_year)
 }
-```
 
-#### 2.2.1.2 Traitement des données aux Birmanie, soyez connecté au client
-
-```{r}
 client_usa <- data_usa %>%
   select(`Customer ID`, `Order Date`, `Order ID`, Sales, Quantity) %>%
   group_by(`Customer ID`, `Order Date`, `Order ID`) %>%
@@ -356,10 +351,7 @@ client_usa <- data_usa %>%
 client_usa$quarter <- sapply(client_usa$order_date, get_custom_quarter)
 
 client_usa$week <- sapply(client_usa$order_date, get_custom_week)
-```
-### 2.2.2 Traitement des données aux États-Unis, soyez connecté au client
 
-```{r}
 client_mya <- data_mya %>%
   select(quantity, total, dtme, invoice_id) %>%
   transmute(order_id = invoice_id,
@@ -372,27 +364,25 @@ client_mya$quarter <- sapply(client_mya$order_date, get_custom_quarter)
 client_mya$week <- sapply(client_mya$order_date, get_custom_week)
 ```
 
-### 2.2.3 Analyse du prix unitaire client
-
-#### 2.2.3.1 Aperçu annuel des États-Unis et du Myanmar
+### 2.2.1 Quelles sont les unités de clients annuels moyens des supermarchés aux États-Unis et au Myanmar ?
 
 ```{r}
 client_unit_year_usa <- client_usa %>%
   group_by(year = format(order_date, "%Y")) %>%
-  summarise(client_unit = sum(total) / n())
+  summarise(client_unit = sum(quantity) / n())
 
 client_unit_year_mya <- client_mya %>%
   group_by(year = format(order_date, "%Y")) %>%
-  summarise(client_unit = sum(total) / n())
+  summarise(client_unit = sum(quantity) / n())
 ```
 
 ```{r}
 
-max_y <- (max(max(client_unit_year_usa$client_unit), max(client_unit_year_mya$client_unit)) %/% 100 + 1.5) * 100
+max_y <- (max(max(client_unit_year_usa$client_unit), max(client_unit_year_mya$client_unit)) %/% 10 + 1) * 10
 
 bar_client_unit_usa <- ggplot(client_unit_year_usa, aes(x = year, y = client_unit)) +
   geom_bar(stat = "identity", fill = brewer.pal(3, "Set1")[1], alpha = 0.7, width = 0.5) +
-  labs(title = "Average Client Unit by Year (USA)", x = "Year", y = "Average Client Unit") +
+  labs(title = "Average Client Unit by Year (USA)", x = "Year", y = "Average Client Unit (number of items)") +
   coord_cartesian(ylim = c(0, max_y)) +
   scale_y_continuous(expand = c(0, 0)) + 
   theme(plot.title = element_text(size = 12)) + 
@@ -404,7 +394,7 @@ bar_client_unit_usa <- ggplot(client_unit_year_usa, aes(x = year, y = client_uni
 
 bar_client_unit_mya <- ggplot(client_unit_year_mya, aes(x = year, y = client_unit)) +
   geom_bar(stat = "identity", fill = brewer.pal(3, "Set1")[2], alpha = 0.7, width = 0.5) +
-  labs(title = "Average Client Unit by Year (MYA)", x = "Year", y = "Average Client Unit") +
+  labs(title = "Average Client Unit by Year (MYA)", x = "Year", y = "Average Client Unit (number of items)") +
   coord_cartesian(ylim = c(0, max_y)) +
   scale_y_continuous(expand = c(0, 0)) +
   theme(plot.title = element_text(size = 12)) + 
@@ -413,15 +403,19 @@ bar_client_unit_mya <- ggplot(client_unit_year_mya, aes(x = year, y = client_uni
               vjust = -0.5,
               color = "black")
 
-grid.arrange(bar_client_unit_usa, bar_client_unit_mya, nrow = 1) 
+
+grid.arrange(bar_client_unit_usa, bar_client_unit_mya, nrow = 1)
 
 ```
+**"Client unit"** se réfère au nombre moyen d'articles achetés par un client en une seule transaction.
 
-Le prix unitaire client fait référence au montant moyen dépensé par chaque client dans une activité d'achat ou de consommation.
+**Analyse des Graphiques**:
 
-Cela montre que le prix unitaire par client aux États-Unis a eu tendance à être retiré des rayons entre 2014 et 2017, mais il était également plus élevé que le prix unitaire par client au Myanmar en 2019.
+**USA** : Les unités moyennes de clients varient légèrement d'année en année, avec une tendance à la baisse de 2014 à 2017.
 
-### 2.2.4 La relation entre la quantité achetée par le client et le prix total
+**MYA** : Pour l'année 2019, l'unité moyenne de clients est de 5,5 articles, ce qui est plus bas que les unités moyennes observées aux États-Unis pour les années données.
+
+### 2.2.2 Quelle est la relation entre le nombre d’articles achetés par un client en une seule transaction et le prix total ?
 
 ```{r}
 client_mya_total_quantity <- client_mya %>%
@@ -432,7 +426,7 @@ client_usa_total_quantity <- client_usa %>%
   filter(total <= 1500 &
            total > quantile(total, 0.05) & 
            total < quantile(total, 0.95) & 
-           quantity <= 11 &
+           # quantity <= 10 &
            quantity > quantile(quantity, 0.05) & 
            quantity < quantile(quantity, 0.95) ) %>%
   select(total = total,
@@ -442,39 +436,52 @@ boxplot_usa <-ggplot(data = client_usa_total_quantity, mapping = aes(x = quantit
   geom_boxplot(aes(group = cut_width(quantity, 1)), fill = brewer.pal(3, "Set1")[1], alpha = 0.7) +
   labs(title = "Relationship between Quantity and Total (USA)",
        x = "quantity",
-       y = "total (USD)") +
-  scale_x_continuous(breaks = seq(0, 10, by = 1), limits = c(2.5, 10.5)) +
-  scale_y_continuous(limits = c(0, 1000)) + 
+       y = "total ($)") +
+  scale_x_continuous(breaks = seq(0, 50, by = 1), limits = c(2.5, 18.5)) +
+  scale_y_continuous(limits = c(0, 1200)) + 
   theme(plot.title = element_text(size = 10))
 
 boxplot_mya <- ggplot(data = client_mya_total_quantity, mapping = aes(x = quantity, y = total)) + 
   geom_boxplot(aes(group = cut_width(quantity, 1)), fill = brewer.pal(3, "Set1")[2], alpha = 0.7) +
   labs(title = "Relationship between Quantity and Total (MYA)",
        x = "quantity",
-       y = "total (USD)")+
+       y = "total ($)")+
   scale_x_continuous(breaks = seq(0, 10, by = 1), limits = c(2.5, 10.5)) + 
   theme(plot.title = element_text(size = 10))
 
-
 grid.arrange(boxplot_usa, boxplot_mya, ncol = 2)
 ```
-On voit clairement que le montant total des achats des clients augmente à mesure que la quantité achetée augmente. Dans le même temps, le niveau du montant total des achats des clients américains fluctue beaucoup plus que celui du Myanmar.
+**Analyse des Graphiques**:
 
-### 2.2.5 RFM Model
+**USA**
+
+  - Le graphique de gauche (USA) montre une augmentation générale du prix total avec l'augmentation de la quantité d'articles achetés.
+  - Cependant, la dispersion est plus importante pour les petites quantités (2 à 7 articles), avec des valeurs totales qui varient largement.
+  - Pour des quantités plus grandes (à partir de 10 articles), le prix total semble se stabiliser autour de 500 à 750 $, mais avec une plus grande variabilité pour les très grandes quantités (16-19 articles).
+
+**MYA**
+
+  - Le graphique de droite (MYA) montre une augmentation plus linéaire et plus claire du prix total avec l'augmentation de la quantité d'articles achetés.
+  - La médiane du prix total augmente régulièrement avec la quantité, ce qui indique une relation plus directe et proportionnelle entre la quantité et le prix total par rapport aux USA.
+  - La variabilité du prix total augmente également avec la quantité, mais de manière plus uniforme par rapport au graphique des USA.
+
+**Conclusion**
+
+  - **Relation Positive** : Dans les deux pays, il y a une relation positive entre la quantité d'articles achetés et le prix total. Plus un client achète d'articles en une seule transaction, plus le prix total a tendance à être élevé.
+  - **Variabilité** : La variabilité du prix total est plus marquée dans le cas des USA, surtout pour des petites et grandes quantités, alors que pour la Malaisie, l'augmentation est plus linéaire et la variabilité augmente de manière plus prévisible.
+  - **Différences Régionales** : Les clients aux USA montrent une plus grande dispersion des prix pour une même quantité d'articles par rapport aux clients en Malaisie, ce qui peut être dû à des facteurs tels que les différences de prix des articles, les promotions ou les comportements d'achat.
+
+### 2.2.3 Comment classer les clients en fonction de leur comportement de consommation et formuler des stratégies correspondantes ?
 
 ```{r}
 assign_label <- function(value, median_value) {
   ifelse(value <= median_value, "Low", "High")
 }
 
-
 min_max_normalize <- function(x) {
   (x - min(x)) / (max(x) - min(x))
 }
-```
 
-
-```{r}
 max_date <- max(client_usa$order_date)
 
 rfm_data <- client_usa %>%
@@ -490,7 +497,7 @@ rfm_data <- client_usa %>%
 
 rfm_data <- rfm_data %>%
   mutate(
-    r_score = ntile(recency, 2),
+    r_score = ntile(-recency, 2),
     f_score = ntile(frequency, 2),
     m_score = ntile(monetary, 2)
   )
@@ -500,20 +507,16 @@ rfm_data <- rfm_data %>%
     segment = paste0("R", r_score, "F", f_score, "M", m_score)
   )
 
-head(rfm_data)
-
-
-
 rfm_to_customer_segment <- function(rfm_label) {
   segment_map <- c(
-    "R1F1M1" = "New Customers",
-    "R1F1M2" = "Important Deepening Customers", 
-    "R1F2M1" = "Potential customers",
-    "R1F2M2" = "Important Value Customers",
-    "R2F1M1" = "Churned Customers",
-    "R2F1M2" = "Important Retention Customers",
-    "R2F2M1" = "Average Maintenance Customers",
-    "R2F2M2" = "Important Win-Back Customers"
+    "R2F1M1" = "New Customers",
+    "R2F1M2" = "Important Deepening Customers", 
+    "R2F2M1" = "Potential customers",
+    "R2F2M2" = "Important Value Customers",
+    "R1F1M1" = "Churned Customers",
+    "R1F1M2" = "Important Retention Customers",
+    "R1F2M1" = "Average Maintenance Customers",
+    "R1F2M2" = "Important Win-Back Customers"
   )
 
   customer_segment <- segment_map[rfm_label]
@@ -534,21 +537,78 @@ plot_ly(x = rfm_data$recency,
         mode = "markers",
         color = rfm_data$segment,
         hoverinfo = "text",
+        text = ~paste("Customer ID:", rfm_data$customer_id, "<br>",
+                      "Recency:", rfm_data$recency, "<br>",
+                      "Frequency:", rfm_data$frequency, "<br>",
+                      "Monetary:", rfm_data$monetary),
         marker = list(size = 5)) %>% 
   layout(
     scene = list(
-      xaxis = list(title = "Recency"),
-      yaxis = list(title = "Frequency"),
-      zaxis = list(title = "Monetary")
-      ),
-    title = "Model RFM"
-)
+      xaxis = list(title = "Recency(days)"),
+      yaxis = list(title = "Frequency(days)"),
+      zaxis = list(title = "Monetary($)")
+    ),
+    title = "Model RMF"
+  )
 
 ```
 
-Le modèle RMF est un modèle d'analyse client utilisé pour classer et évaluer les clients afin de développer des stratégies marketing personnalisées et de gérer les relations clients. Le nom du modèle RMF vient de ses trois indicateurs clés : l'heure du dernier achat (Recency), la fréquence d'achat (Frequency) et le montant de la consommation (Monétaire).
 
-Selon le modèle RMF, les utilisateurs peuvent être divisés en 8 poids et nous pouvons nous concentrer sur les clients correspondants en fonction de la stratégie de développement du supermarché.
+```{r}
+segment_counts <- table(rfm_data$segment)
+segment_percent <- segment_counts / sum(segment_counts) * 100
+
+segment_summary <- data.frame(segment = names(segment_counts), segment_percent = segment_percent)
+
+ggplot(segment_summary, aes(x = "", y = segment_percent, fill = segment)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar(theta = "y") +
+  labs(title = "RFM Segmentation",
+       fill = "Segment") +
+  scale_fill_manual(values = brewer.pal(n = length(unique(rfm_data$segment)), name = "Set2")) +
+  theme_void() +
+  theme(legend.position = "right") +
+  geom_text(aes(label = paste0(round(segment_percent), "%")), 
+            position = position_stack(vjust = 0.5))
+```
+
+
+Le modèle RFM (Récence, Fréquence, Monétaire) est une technique de segmentation des clients utilisée en marketing pour analyser et regrouper les clients en fonction de leurs comportements d'achat. 
+
+- **Récence (R)** : date à laquelle un client a effectué un achat (jours depuis le dernier achat). Calculez le nombre de jours depuis le dernier achat du client. Attribuez un score en fonction de la date d'achat, les achats plus récents obtenant des scores plus élevés.
+- **Fréquence (F)** : fréquence à laquelle un client effectue un achat (jours à quelle fréquence faire ses achats). Comptez le nombre total d'achats effectués par le client au cours d'une période de temps spécifiée. Attribuez un score en fonction du nombre d'achats, avec des acheteurs plus fréquents. obtenir des scores plus élevés.
+- **Monétaire (M)** : combien d'argent un client dépense (montant de l'achat en dollars américains). Additionnez le montant total d'argent que le client a dépensé au cours d'une période de temps spécifiée. Attribuez un score en fonction des dépenses totales, les dépensiers les plus élevés obtenant des scores plus élevés.
+
+Chaque client est affecté à un groupe RFM, qui représente sa performance sur ces trois dimensions. Voici une description de chaque catégorie :
+
+1. **R2F1M1 - New Customers**
+  - **Description** : Il s'agit de clients qui viennent d'effectuer leur premier achat récemment. Leur fréquence d'achat et leur montant sont tous deux faibles.
+  - **Caractéristiques** : Puisqu’il s’agit de nouveaux clients, ils doivent devenir des clients fidèles grâce à un bon service et des stratégies marketing appropriées.
+2. **R2F1M2 - Important Deepening Customers**
+  - **Description** : Ces clients ont récemment effectué leur premier achat et, bien que la fréquence d'achat soit faible, le montant de l'achat est élevé.
+  - **Caractéristiques** : ces clients ont un potentiel élevé et ont besoin de mieux comprendre leurs besoins et de fournir des produits et services personnalisés pour augmenter leur fréquence d'achat.
+3. **R2F2M1 - Potential Customers**
+  - **Description** : Ces clients ont récemment effectué des achats, avec une fréquence d'achat élevée, mais un faible montant par achat.
+  - **Caractéristiques** : ces clients ont une fréquence d'interaction élevée et le montant de leurs achats peut être augmenté en recommandant des produits connexes et en améliorant l'expérience client.
+4. **R2F2M2 - Important Value Customers**
+  - **Description** : Ces clients ont récemment effectué des achats fréquents et disposent d'un montant élevé.
+  - **Caractéristiques** : Ce sont les clients les plus précieux et doivent être entretenus et pris en charge, avec des offres exclusives et des services de qualité pour maintenir leur fidélité.
+5. **R1F1M1 - Churned Customers**
+  - **Description** : Ces clients n'ont pas effectué d'achats depuis longtemps et ont une fréquence et un montant d'achat faibles.
+  - **Caractéristiques** : ces clients risquent de perdre leur clientèle et devront peut-être être réactivés grâce à des promotions spéciales ou à des stratégies de réactivation.
+6. **R1F1M2 - Important Retention Customers**
+  - **Description** : Ces clients n'ont pas effectué d'achats depuis longtemps, mais ils avaient auparavant des montants d'achat élevés.
+  - **Caractéristiques** : Ces clients étaient autrefois des clients de grande valeur et ont besoin d'être restimulés grâce à des soins particuliers et à des stratégies promotionnelles personnalisées.
+7. **R1F2M1 - Average Maintenance Customers**
+  - **Description** : Ces clients ont un comportement d'achat moyen, avec une fréquence élevée mais un faible montant.
+  - **Caractéristiques** : Ces clients constituent un groupe de clients relativement stable et leur comportement d'achat peut être maintenu grâce à une interaction continue et des offres modérées.
+8. **R1F2M2 - Important Win-Back Customers**
+  - **Description** : Ces clients ont une fréquence d’achat élevée et un montant d’achat élevé, mais n’ont effectué aucun achat récemment.
+  - **Fonctionnalités** : Ces clients étaient autrefois des clients très importants, et vous pouvez essayer de les réactiver en développant des stratégies de récupération ciblées (telles que des offres spéciales et des recommandations personnalisées).
+
+**Analyse des Graphiques**:
+
+Le pie chart montre que dans les supermarchés américains étudiés, les trois types de clients(New Customers, Important Win-Back Customers, Important Value Customers) représentent la plus grande proportion, donc sur la base de l'introduction précédente, nous pouvons adopter les méthodes de marketing correspondantes.
 
 ---
 
@@ -604,7 +664,7 @@ Nous pouvons voir que les produits moins chers que 500\$ se vendent mieux. En d'
 
 ```{r}
 ggplot(product_us, aes(x = unit_price, y = quantity)) +
-  geom_point(color = "black") +
+  geom_point(color = "salmon") +
   labs(title = "The relation between the sales and the price (US)",
        x = "product_unit_price ($)",
        y = "sales (pcs)") +

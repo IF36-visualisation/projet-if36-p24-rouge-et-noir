@@ -1,12 +1,76 @@
 library(shiny)
 library(shinydashboard)
 
+rfm_description <- tags$div(style = 'padding: 15px;',
+                            tags$h4("How to classify customers based on their consumption behavior and to formulate corresponding strategies?"),
+                            tags$p("The RFM (Recency, Frequency, Monetary) model is a customer segmentation technique used in marketing to analyze and group customers based on their purchasing behaviors. Each component of the RFM model provides insight into different aspects of customer behavior:",
+                                   tags$ul(
+                                     tags$li(tags$strong("Recency (R):"), " How recently a customer made a purchase (days since last purchase). Calculate the number of days since the customer's last purchase. Assign a score based on how recent this purchase was, with more recent purchases getting higher scores."),
+                                     tags$li(tags$strong("Frequency (F):"), " How often a customer makes a purchase (days how often to shop). Count the total number of purchases made by the customer within a specified time period. Assign a score based on the number of purchases, with more frequent purchasers getting higher scores."),
+                                     tags$li(tags$strong("Monetary (M):"), " How much money a customer spends (purchase amount in US dollars). Sum the total amount of money the customer has spent within a specified time period. Assign a score based on the total spending, with higher spenders getting higher scores.")
+                                   )
+                            ),
+                            tags$p(),
+                            tags$p("Each customer is assigned to an RFM group, which represents their performance on these three dimensions. Here is a description of each category:",
+                                   tags$ol(
+                                     tags$li(tags$span(tags$strong("R2F1M1 - New Customers")),
+                                             tags$ul(
+                                               tags$li(tags$span(tags$strong("Description:"), " These are customers who have just made their first purchase recently. Their purchase frequency and purchase amount are both low.")),
+                                               tags$li(tags$span(tags$strong("Features:"), " Since they are new customers, they need to be cultivated into loyal customers through good service and appropriate marketing strategies."))
+                                             )
+                                     ),
+                                     tags$li(tags$span(tags$strong("R2F1M2 - Important Deepening Customers")),
+                                             tags$ul(
+                                               tags$li(tags$span(tags$strong("Description:"), " These customers have recently made their first purchase, and although the purchase frequency is low, the purchase amount is high.")),
+                                               tags$li(tags$span(tags$strong("Features:"), " These customers have high potential and need to further understand their needs and provide personalized products and services to increase their purchase frequency."))
+                                             )
+                                     ),
+                                     tags$li(tags$span(tags$strong("R2F2M1 - Potential Customers")),
+                                             tags$ul(
+                                               tags$li(tags$span(tags$strong("Description:"), " These customers have recently made purchases, with a high purchase frequency, but a low amount per purchase.")),
+                                               tags$li(tags$span(tags$strong("Features:"), " These customers have a high interaction frequency, and their purchase amount can be increased by recommending related products and improving customer experience."))
+                                             )
+                                     ),
+                                     tags$li(tags$span(tags$strong("R2F2M2 - Important Value Customers")),
+                                             tags$ul(
+                                               tags$li(tags$span(tags$strong("Description:"), " These customers have recently made frequent purchases and have a high amount.")),
+                                               tags$li(tags$span(tags$strong("Features:"), " These are the most valuable customers and need to be maintained and cared for, with exclusive offers and quality services to maintain their loyalty."))
+                                             )
+                                     ),
+                                     tags$li(tags$span(tags$strong("R1F1M1 - Churned Customers")),
+                                             tags$ul(
+                                               tags$li(tags$span(tags$strong("Description:"), " These customers have not made purchases for a long time and have low purchase frequency and amount.")),
+                                               tags$li(tags$span(tags$strong("Features:"), " These customers are at risk of churn and may need to be revived through special promotions or reactivation strategies."))
+                                             )
+                                     ),
+                                     tags$li(tags$span(tags$strong("R1F1M2 - Important Retention Customers")),
+                                             tags$ul(
+                                               tags$li(tags$span(tags$strong("Description:"), " These customers have not made purchases for a long time, but they used to have high purchase amounts.")),
+                                               tags$li(tags$span(tags$strong("Features:"), " These customers used to be high-value customers and need to be re-stimulated through special care and personalized promotional strategies."))
+                                             )
+                                     ),
+                                     tags$li(tags$span(tags$strong("R1F2M1 - Average Maintenance Customers")),
+                                             tags$ul(
+                                               tags$li(tags$span(tags$strong("Description:"), " These customers have average purchase behavior, with high frequency but low amount.")),
+                                               tags$li(tags$span(tags$strong("Features:"), " These customers are a relatively stable customer group and their purchase behavior can be maintained through continuous interaction and moderate offers."))
+                                             )
+                                     ),
+                                     tags$li(tags$span(tags$strong("R1F2M2 - Important Win-Back Customers")),
+                                             tags$ul(
+                                               tags$li(tags$span(tags$strong("Description:"), " These customers have a high purchase frequency and a high purchase amount, but have not made any purchases recently.")),
+                                               tags$li(tags$span(tags$strong("Features:"), " These customers used to be very important customers, and you can try to reactivate them by developing targeted recovery strategies (such as special offers and personalized recommendations)."))
+                                             )
+                                     )
+                                   )
+                            )
+)
+
 
 ui <- dashboardPage(
   dashboardHeader(title = "Market Data Visualizations"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("RFM", tabName = "rfm_transactions", icon = icon("bar-chart")),
+      menuItem("Customer Category Analysis", tabName = "rfm_transactions", icon = icon("bar-chart")),
       menuItem("Price and sales", tabName = "price_sales_us", icon = icon("bar-chart")), #Wuyuan
       menuItem("Price and profit", tabName = "price_profit_us_mya", icon = icon("usd")),  #Wuyuan
       menuItem("Average Transaction Amounts", tabName = "avg_transactions", icon = icon("bar-chart")), # czy
@@ -17,123 +81,10 @@ ui <- dashboardPage(
     tabItems(
       tabItem(tabName = "rfm_transactions",
               fluidRow(
-                box(title = "RFM Analysis", width = 12, status = "primary", solidHeader = TRUE, 
+                box(title = "How to classify customers based on their consumption behavior and to formulate corresponding strategies?", width = 12, status = "primary", solidHeader = TRUE, 
                     plotlyOutput("plotRfmTransactions", height = "600px")),
                 box(width = 12, 
-                    HTML("<div style='padding: 15px;'>
-                    <h4>How to classify users and formulate corresponding sales strategies according to different users(by using RFM model)?</h4>
-                    <p>The RFM (Recency, Frequency, Monetary) model is a customer segmentation technique used in marketing to analyze and group customers based on their purchasing behaviors. Each component of the RFM model provides insight into different aspects of customer behavior:
-                      <ul>
-                        <li>
-                          <strong>Recency (R)</strong>: How recently a customer made a purchase(days since last purchase). 
-                          Calculate the number of days since the customer's last purchase. Assign a score based on how recent this purchase was, with more recent purchases getting higher scores.
-                        </li>
-                        <li>
-                          <strong>Frequency (F)</strong>: How often a customer makes a purchase(days how often to shop).
-                          Count the total number of purchases made by the customer within a specified time period. Assign a score based on the number of purchases, with more frequent purchasers getting higher scores.
-                        </li>
-                        <li>
-                          <strong>Monetary (M)</strong>: How much money a customer spends(purchase amount in US dollars).
-                          Sum the total amount of money the customer has spent within a specified time period. Assign a score based on the total spending, with higher spenders getting higher scores.
-                        </li>
-                      </ul>
-                    </p>
-                    
-                    <p> </p>
-
-    <p>Each customer is assigned to an RFM group, which represents their performance on these three dimensions. Here is a description of each category:
-      <ol>
-          <li>
-              <span><strong>R1F1M1 - New Customers</strong></span>
-              <ul>
-                  <li>
-                      <span><strong>Description:</strong> These are customers who have just made their first purchase recently. Their purchase frequency and purchase amount are both low.</span>
-                  </li>
-                  <li>
-                      <span><strong>Features:</strong> Since they are new customers, they need to be cultivated into loyal customers through good service and appropriate marketing strategies.</span>
-                  </li>
-              </ul>
-          </li>
-          <li>
-              <span><strong>R1F1M2 - Important Deepening Customers</strong></span>
-              <ul>
-                  <li>
-                      <span><strong>Description:</strong> These customers have recently made their first purchase, and although the purchase frequency is low, the purchase amount is high.</span>
-                  </li>
-                  <li>
-                      <span><strong>Features:</strong> These customers have high potential and need to further understand their needs and provide personalized products and services to increase their purchase frequency.</span>
-                  </li>
-              </ul>
-          </li>
-          <li>
-              <span><strong>R1F2M1 - Potential Customers</strong></span>
-              <ul>
-                  <li>
-                      <span><strong>Description:</strong> These customers have recently made purchases, with a high purchase frequency, but a low amount per purchase.</span>
-                  </li>
-                  <li>
-                      <span><strong>Features:</strong> These customers have a high interaction frequency, and their purchase amount can be increased by recommending related products and improving customer experience.</span>
-                  </li>
-              </ul>
-          </li>
-          <li>
-              <span><strong>R1F2M2 - Important Value Customers</strong></span>
-              <ul>
-                  <li>
-                      <span><strong>Description:</strong> These customers have recently made frequent purchases and have a high amount.</span>
-                  </li>
-                  <li>
-                      <span><strong>Features:</strong> These are the most valuable customers and need to be maintained and cared for, with exclusive offers and quality services to maintain their loyalty.</span>
-                  </li>
-              </ul>
-          </li>
-          <li>
-              <span><strong>R2F1M1 - Churned Customers</strong></span>
-              <ul>
-                  <li>
-                      <span><strong>Description:</strong> These customers have not made purchases for a long time and have low purchase frequency and amount.</span>
-                  </li>
-                  <li>
-                      <span><strong>Features:</strong> These customers are at risk of churn and may need to be revived through special promotions or reactivation strategies.</span>
-                  </li>
-              </ul>
-          </li>
-          <li>
-              <span><strong>R2F1M2 - Important Retention Customers</strong></span>
-              <ul>
-                  <li>
-                      <span><strong>Description:</strong> These customers have not made purchases for a long time, but they used to have high purchase amounts.</span>
-                  </li>
-                  <li>
-                      <span><strong>Features:</strong> These customers used to be high-value customers and need to be re-stimulated through special care and personalized promotional strategies.</span>
-                  </li>
-              </ul>
-          </li>
-          <li>
-              <span><strong>R2F2M1 - Average Maintenance Customers</strong></span>
-              <ul>
-                  <li>
-                      <span><strong>Description:</strong> These customers have average purchase behavior, with high frequency but low amount.</span>
-                  </li>
-                  <li>
-                      <span><strong>Features:</strong> These customers are a relatively stable customer group and their purchase behavior can be maintained through continuous interaction and moderate offers.</span>
-                  </li>
-              </ul>
-          </li>
-          <li>
-              <span><strong>R2F2M2 - Important Win-Back Customers</strong></span>
-              <ul>
-                  <li>
-                      <span><strong>Description:</strong> These customers have a high purchase frequency and a high purchase amount, but have not made any purchases recently.</span>
-                  </li>
-                  <li>
-                      <span><strong>Features:</strong> These customers used to be very important customers, and you can try to reactivate them by developing targeted recovery strategies (such as special offers and personalized recommendations).</span>
-                  </li>
-              </ul>
-          </li>
-      </ol>
-    </p>
-                          </div>")
+                  rfm_description
                 )
               )),
       
