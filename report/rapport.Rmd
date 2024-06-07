@@ -170,12 +170,12 @@ Nous avons obtenu des informations complètes sur les transactions de vente dans
 
 
 ```{r include = FALSE}
-data_usa <- read_csv("superstore.csv")
+data_usa <- read_csv("../data/superstore.csv")
 head(data_usa)
 ```
 
 ```{r include = FALSE}
-data_mya <- read_delim("WalmartSQL repository.csv", 
+data_mya <- read_delim("../data/WalmartSQL repository.csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)
 head(data_mya)
 ```
@@ -279,7 +279,7 @@ market_share_plot
 
 
 
-```{r}
+```{r echo=FALSE}
 # Calculer les ventes totales et la part de marché pour chaque ligne de produits
 market_share_mya <- data_mya %>%
   group_by(product_line) %>%
@@ -597,14 +597,14 @@ product_mya = data_mya %>%
 product_mya
 ```
 
-### 2.3.1 La relation entre les ventes et le prix répond aux 2 questions : Quelle gamme de prix de produits se vend le mieux ? Quel niveau de prix génère réellement le plus de ventes ?
+### 2.3.1 La relation entre les ventes et le prix 
 
 Nous pouvons voir que les produits moins chers que 500\$ se vendent mieux. En d'autres termes, la fourchette de prix 0-500\$ est la meilleure. Mais en fait, la baisse du prix ne génère pas le plus de ventes. Il y a beaucoup de points rassemblés dans le coin inférieur gauche.
 
 
 ```{r}
 ggplot(product_us, aes(x = unit_price, y = quantity)) +
-  geom_point(color = "black") +
+  geom_point(color = "salmon") +
   labs(title = "The relation between the sales and the price (US)",
        x = "product_unit_price ($)",
        y = "sales (pcs)") +
@@ -614,9 +614,9 @@ ggplot(product_us, aes(x = unit_price, y = quantity)) +
   
 ```
 
-### 2.3.2 La distribution des prix et des bénéfices est utile pour comprendre la sensibilité au prix et la compétitivité des différents marchés. Il est évident que dans les deux pays, un prix plus élevé entraîne un bénéfice plus important, même s'il est plus difficile de trouver la tendance des points bleus (les produits aux États-Unis).
+### 2.3.2 La distribution des prix et des bénéfices 
 
-#### 2.3.2.1 Sensibilité au prix : La sensibilité au prix du marché peut être comprise en examinant la distribution et les tendances des prix des produits. 
+#### 2.3.2.1 Sensibilité au prix : la distribution et les tendances des prix  
 
 
 Sur les marchés où la sensibilité au prix est élevée, on observe généralement une large distribution des prix des produits et des marges bénéficiaires plus faibles, car les consommateurs ont tendance à préférer les produits moins chers. À l'instar du marché américain
@@ -624,7 +624,7 @@ Sur les marchés où la sensibilité au prix est élevée, on observe générale
 À l'inverse, sur les marchés où la sensibilité au prix est faible, la distribution des prix des produits est généralement plus étroite et les marges bénéficiaires plus élevées. C'est le cas du marché du MYA.
 
 
-#### 2.3.2.2 La compétitivité : La compétitivité du marché peut être appréhendée en examinant la distribution et les tendances des bénéfices sur les produits. 
+#### 2.3.2.2 La compétitivité : la distribution et les tendances des bénéfices 
 
 
 Sur les marchés très concurrentiels, les bénéfices sur les produits ont tendance à être concentrés, car les concurrents s'efforcent de baisser les prix pour attirer les consommateurs, réduisant ainsi les marges bénéficiaires des entreprises. À l'instar du marché américain
