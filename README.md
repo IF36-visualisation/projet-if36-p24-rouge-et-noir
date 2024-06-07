@@ -79,9 +79,9 @@ Nous avons obtenu des informations complètes sur les transactions de vente dans
 
 ### Analyse des performances des ventes des supermarchés aux États-Unis
 
-1. **Dimension de la commande** : Quel est le montant moyen de la transaction et le taux de connexion de chaque commande ? Quelle est la relation entre le montant de la commande et le nombre d’articles commandés ? Quel est le prix total et le bénéfice de chaque commande ?
+1. **Dimension de la commande** : Quel est le montant moyen de la transaction pour chaque sous-catégorie de produits? Comment cela reflète-t-il le comportement d'achat des clients dans différentes catégories?
 
-   La relation entre le montant de la commande et le nombre d'articles dans la commande peut refléter les caractéristiques du comportement d'achat du client. L'analyse de ces indicateurs peut aider les entreprises à comprendre les caractéristiques et les tendances du comportement d'achat des clients, orientant ainsi les stratégies de vente et les activités marketing de l'entreprise. Par exemple, s'il existe une forte corrélation positive entre le montant de la commande et le nombre de produits, l'entreprise peut prendre certaines mesures pour encourager les clients à acheter davantage de produits, telles que le lancement de réductions sur les forfaits, les ventes combinées, etc. si le taux commun est faible, cela peut accroître la volonté des clients d'acheter plusieurs produits par le biais de ventes liées, d'activités promotionnelles, etc., augmentant ainsi les ventes.
+   La catégorie des copieurs montre un montant moyen de transaction élevé, ce qui peut indiquer une préférence pour des équipements de bureau plus sophistiqués et coûteux, nécessaires pour les environnements de travail modernes. L'analyse de ce montant peut aider les entreprises à ajuster leurs stratégies de vente et marketing, telles que le ciblage de promotions ou de bundles pour augmenter le volume des ventes dans les catégories avec des montants de transaction inférieurs.
 
 2. **Dimension client** : Quel est le prix unitaire par client ? Quelle est la relation entre le montant de la consommation du client et le nombre de pièces consommées ? En utilisant le modèle RFM pour stratifier les utilisateurs, pouvons-nous voir le cycle de vie du client et le cycle d'achat ?
 
@@ -102,7 +102,10 @@ Nous avons obtenu des informations complètes sur les transactions de vente dans
 ### Comparaison des supermarchés aux États-Unis et au Myanmar
 
 1. **Comparaison des prix et des marges bénéficiaires** : Comparer les prix des produits et les marges bénéficiaires dans les deux pays peut aider les entreprises à comprendre la sensibilité aux prix et la compétitivité des différents marchés.
-2. **Part de marché et potentiel de croissance** : En analysant les données de ventes, vous pouvez comprendre la part de marché et le potentiel de croissance de l’entreprise sur les deux marchés. Cela permet d’identifier et de prioriser les opportunités d’expansion du marché.
+2. **Part de marché et potentiel de croissance** : Quelles sont les parts de marché des différentes catégories de produits aux États-Unis et au Vietnam? Comment ces informations peuvent-elles orienter les décisions stratégiques pour ces marchés?
+
+   En examinant la part de marché, nous observons une prédominance des téléphones dans le marché américain, soulignant une forte demande pour les technologies de pointe. En contraste, le marché vietnamien montre une préférence pour les produits de sport et de voyage, indiquant un intérêt pour les activités de plein air et un style de vie sain. Cette information est cruciale pour prioriser les initiatives d'expansion et adapter les produits aux préférences culturelles et aux besoins spécifiques de chaque marché.
+   
 3. **Environnement économique et comportement des consommateurs** : En comparant les données de ventes de deux pays, nous pouvons comprendre l'environnement économique, le niveau de revenu des consommateurs et le pouvoir d'achat des deux pays, fournissant ainsi une référence pour la formulation de stratégies de marché.
 
 test
