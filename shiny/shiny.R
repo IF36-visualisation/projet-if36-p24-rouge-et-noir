@@ -6,6 +6,7 @@ library(ggplot2)
 library(dplyr)
 library(plotly)
 library(readr)
+library(lubridate)
 
 data_usa_path <- "../data/superstore.csv"
 data_usa <- read_csv(data_usa_path)
@@ -431,6 +432,122 @@ server <- function(input, output) {
     ggplotly(p)
   })
   # ############# The server part added by czy END
+} 
+  ##################### The server part added by dyf start
+
+# Data cleaning: convert date format
+data_usa$`Order Date` <- dmy(data_usa$`Order Date`)
+data_usa$`Ship Date` <- dmy(data_usa$`Ship Date`)
+
+# Convert date to "year-month-day" format
+data_usa$`Order Date` <- format(data_usa$`Order Date`, "%Y-%m-%d")
+data_usa$`Ship Date` <- format(data_usa$`Ship Date`, "%Y-%m-%d")
+
+# Add year column
+data_usa$Year <- format(as.Date(data_usa$`Order Date`), "%Y")
+
+# Define UI
+ui <- dashboardPage(
+  dashboardHeader(title = "Market Data Visualizations"),
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("RFM", tabName = "rfm_transactions", icon = icon("bar-chart")),
+      menuItem("Price and sales", tabName = "price_sales_us", icon = icon("bar-chart")),
+      menuItem("Price and profit", tabName = "price_profit_us_mya", icon = icon("usd")),
+      menuItem("Average Transaction Amounts", tabName = "avg_transactions", icon = icon("bar-chart")),
+      menuItem("City Analysis", tabName = "city_analysis", icon = icon("city"))  # New menu item
+    )
+  ),
+  dashboardBody(
+    tabItems(
+      tabItem(tabName = "rfm_transactions",
+              fluidRow(
+                box(title = "RFM Analysis", width = 12, status = "primary", solidHeader = TRUE, 
+                    plotlyOutput("plotRfmTransactions", height = "600px")),
+                box(width = 12, 
+                    HTML("<div style='padding: 15px;'>
+                    <h4>How to classify users and formulate corresponding marketing strategies</h4>
+                    <p>RFM (Recency, Frequency, Monetary) analysis is a method used to analyze customer behavior.</p>
+                    </div>"))
+              )
+      ),
+      tabItem(tabName = "price_sales_us",
+              fluidRow(
+                box(title = "Price and Sales", width = 12, status = "primary", solidHeader = TRUE, 
+                    plotOutput("plotPriceSalesUS", height = "600px"))
+              )
+      ),
+      tabItem(tabName = "price_profit_us_mya",
+              fluidRow(
+                box(title = "Price and Profit", width = 12, status = "primary", solidHeader = TRUE, 
+                    plotOutput("plotPriceProfitUSMYA", height = "600px"))
+              )
+      ),
+      tabItem(tabName = "avg_transactions",
+              fluidRow(
+                box(title = "Average Transaction Amount by Sub-Category", width = 12, status = "primary", solidHeader = TRUE, 
+                    plotlyOutput("plotAvgTransactions", height = "600px"))
+              )
+      ),
+      tabItem(tabName = "city_analysis",
+              fluidRow(
+                box(title = "Filter", status = "primary", solidHeader = TRUE, width = 12,
+                    sliderInput("num_cities", "Number of Cities to Display:", min = 1, max = 20, value = 10),
+                    selectInput("year", "Select Year:", choices = c("All", unique(data_usa$Year)), selected = "All")
+                )
+              ),
+              fluidRow(
+                box(title = "Number of Customers by City in USA", status = "primary", solidHeader = TRUE, width = 6,
+                    plotOutput("customer_count_plot")
+                ),
+                box(title = "Average Customer Spending by City in USA", status = "primary", solidHeader = TRUE, width = 6,
+                    plotOutput("avg_spending_plot")
+                )
+              )
+      )
+    )
+  )
+)
+
+# Define server logic
+server <- function(input, output) {
+  
+  filtered_data <- reactive({
+    if (input$year == "All") {
+      data_usa
+    } else {
+      data_usa %>% filter(Year == input$year)
+    }
+  })
+  
+  output$customer_count_plot <- renderPlot({
+    city_count <- filtered_data() %>%
+      group_by(City) %>%
+      summarise(CustomerCount = n_distinct(`Customer ID`)) %>%
+      arrange(desc(CustomerCount)) %>%
+      head(input$num_cities)
+    
+    ggplot(city_count, aes(x = reorder(City, CustomerCount), y = CustomerCount)) +
+      geom_bar(stat = "identity", fill = "salmon") +
+      coord_flip() +
+      labs(title = "Number of Customers by City", x = "City", y = "Number of Customers")
+  })
+  
+  output$avg_spending_plot <- renderPlot({
+    avg_spending <- filtered_data() %>%
+      group_by(City) %>%
+      summarise(AvgSpending = mean(Sales)) %>%
+      arrange(desc(AvgSpending)) %>%
+      head(input$num_cities)
+    
+    ggplot(avg_spending, aes(x = reorder(City, AvgSpending), y = AvgSpending)) +
+      geom_bar(stat = "identity", fill = "skyblue") +
+      coord_flip() +
+      labs(title = "Average Customer Spending by City", x = "City", y = "Average Spending")
+  })
 }
+  
+  ##################### The server part added by dyf end
+
 
 shinyApp(ui, server)
