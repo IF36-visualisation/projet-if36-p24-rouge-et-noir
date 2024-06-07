@@ -1,0 +1,899 @@
+---
+title: "Rapport
+————Découvrez la performance du chiffre d'affaires d’un supermarché"
+author: "LinZhifan, DaiYifei, Wuyuan, ChenZhaoyang"
+date: "2024-04-29"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+
+```{r setup, include=FALSE}
+library(readr)
+library(plotly)
+library(tidyverse)
+library(ggthemes)
+library(gridExtra)
+library(RColorBrewer)
+
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(scales)
+library(forecast)
+library(tibble)
+library(knitr)
+library(kableExtra)
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+
+# 1 Proposition
+## 1.1 Introduction
+Mon groupe envisage d'utiliser deux ensembles de données dans notre projet de cours. Le premier ensemble de données couvre les ventes d’une grande chaîne de supermarchés aux États-Unis de 2014 à 2017, et le deuxième ensemble de données couvre les ventes de Walmart Myanmar au premier trimestre 2019. Notre analyse se concentrera sur cinq dimensions : la commande, le client, le produit, la météo et l'emplacement. Nous analyserons principalement les données pertinentes des supermarchés américains, chercherons à comprendre les raisons possibles de la baisse du taux de croissance des ventes et proposerons des moyens d'augmenter les ventes. Dans le même temps, nous comparerons également les transactions entre les États-Unis et le Myanmar afin de mieux comprendre le marché et de fournir des données pour les stratégies de marché transfrontalières.
+
+## 1.2 Donnée
+
+### 1.2.1 L'info de vente pour une chaîne de supermarché aux États-Unis
+
+Ensemble de données sur le commerce de détail d'une grande surface internationale pendant 4 ans aux États-Unis. Il comprend divers attributs, notamment le ID de la command, la date de commande, la date d’expédition, le mode d’expédition, ID de client, le nom du client, le pay de cette commande, la ville de commande, le code postal, la région, ID de produit, la catégorie de produit, le nom du produit, le montant des ventes de ce produit, le nombre d’unité (pièce) de ce produit, le montant de réduction de ce produit. Ce riche ensemble de données facilite l'analyse détaillée et la compréhension des préférences des clients, de la façon de transport, de la génération de revenus, ce qui permet aux entreprises de changer leurs stratégies pour enlever la satisfaction des clients.
+
+- **Nombre d’observations**: 9995
+- **Nombre de variables**: 21
+
+- **[Source 🚀](https://www.kaggle.com/aksha17/superstore-sales)**
+
+```{r echo=FALSE, results='asis'}
+data_description <- data.frame(
+  Caractéristique = c("invoice_id", "branch", "city", "customer_type", "gender", "product_line", "unit_price", "quantity", "vat", "total", "dtme", "tme", "payment_method", "cogs", "gross_margin_pct", "gross_income", "rating", "time_of_day", "day_name", "month_name"),
+  Description = c(
+    "Identifiant de la facture", 
+    "Le symbol de ce chaîne de Walmart", 
+    "La ville où se trouve le Walmart", 
+    "Membre ou non (carte de fidélité)", 
+    "Sexe de ce client", 
+    "Catégorie de cet article", 
+    "Prix d’un pièce", 
+    "Quantité des articles achetés", 
+    "TVA en France", 
+    "Montant total d’achat", 
+    "Date et l'heure de l'achat", 
+    "Heure précise de l’achat", 
+    "Mode de paiement, comme espèces", 
+    "Coût d'un produit vendu", 
+    "Marge brute en pourcentage(%)", 
+    "Revenu brut total", 
+    "Évaluation de l'expérience d'achat", 
+    "Moment d’achat, comme matin/midi", 
+    "Jour de la semaine", 
+    "Mois où l'achat a été effectué"
+  ),
+  Type = c("String", "char(A, B, C)", "String", "String(Membre, Normal)", "String(Female, Male)", "String", "float", "int", "float", "float", "DATE(YYYY/MM/DD)", "TIME(HH:MM:SS)", "char", "float", "float", "float", "float", "String", "String", "String")
+)
+
+# Utilisez la fonction kable pour créer un tableau et ajouter des lignes de séparation
+kable(data_description, col.names = c("Caractéristique", "Description", "Type"), format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = F) %>%
+  add_header_above(c(" " = 3)) %>%
+  column_spec(1, border_right = TRUE) %>%
+  column_spec(2, border_right = TRUE) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#4CAF50") %>%
+  row_spec(1:nrow(data_description), hline_after = TRUE)
+```
+
+
+### 1.2.2 L'info de vente dans 3 chaînes Walmart en Birmanie
+
+L'ensemble de données fournit des informations complètes sur les transactions de vente effectuées par Walmart, l'une des principales chaînes de magasins au monde. Il comprend divers attributs, notamment l'ID de la facture, la succursale, la ville, le type de client, le sexe, la ligne de produit, le prix unitaire, la quantité, la taxe (5 %), le prix total, la date, l'heure, le mode de paiement, le coût des marchandises vendues (COGS), le pourcentage de marge brute, le revenu brut et l'évaluation. Ce riche ensemble de données facilite l'analyse détaillée et la compréhension des modèles de vente, des préférences des clients, de la génération de revenus et de l'évaluation des performances, ce qui permet aux entreprises de prendre des décisions et des stratégies éclairées pour améliorer leur efficacité opérationnelle et la satisfaction des clients.
+
+- **Nombre d’observations**: 1001
+- **Nombre de variables**: 20
+
+- **[Source 🚀](https://www.kaggle.com/datasets/antaesterlin/walmart-commerce-data)**
+
+```{r,echo=FALSE, results='asis'}
+data_description <- data.frame(
+  Caractéristique = c("Row ID", "Order ID", "Order Date", "Ship Date", "Ship Mode", "Customer ID", "Customer Name", "Segment", "Country", "City", "State", "Postal Code", "Region", "Product ID", "Category", "Sub-Category", "Product Name", "Sales", "Quantity", "Discount", "Profit"),
+  Description = c(
+    "Identifiant de ligne(1, 2...)", 
+    "Identifiant de la commande", 
+    "Date à laquelle la commande se passe", 
+    "Date d’expédition", 
+    "Mode d'expédition de la commande", 
+    "ID du client associé à la commande", 
+    "Nom du client", 
+    "Segment de client(entreprise, particulier)", 
+    "Pays de cette commande", 
+    "Ville où la commande a été expédiée", 
+    "États aux états-unis", 
+    "Code postal", 
+    "Région géographique(l’est, l’ouest...)", 
+    "Identifiant du produit de cette commande", 
+    "Catégorie générale(comme Product Line)", 
+    "Sous-catégorie spécifique du produit", 
+    "Nom du produit", 
+    "Montant des ventes de ce produit", 
+    "Nombre d'unités de ce produit", 
+    "Montant de réduction à ce produit", 
+    "Montant de profit généré par ce produit"
+  ),
+  Type = c("int", "String", "DATE(DD/MM/YYYY)", "DATE(DD/MM/YYYY)", "String", "String", "String", "String", "String", "String", "String", "int", "String", "String", "String", "String", "String", "float", "int", "float", "float")
+)
+
+# Utilisez la fonction kable pour créer un tableau et ajouter des lignes de séparation verticales et des lignes
+kable(data_description, col.names = c("Caractéristique", "Description", "Type"), format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = F) %>%
+  column_spec(1, border_right = TRUE) %>%
+  column_spec(2, border_right = TRUE) %>%
+  column_spec(3, border_right = TRUE) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#4CAF50") %>%
+  row_spec(1:nrow(data_description), hline_after = TRUE)
+```
+
+
+## 1.3 Plan d'analyse
+
+Nous avons obtenu des informations complètes sur les transactions de vente dans les grands supermarchés aux États-Unis et au Myanmar respectivement, et effectuerons une analyse des données à ce sujet. Voici quelques exemples d'analyse de requêtes sur cet ensemble de données :
+
+### 1.3.1 Analyse des performances des ventes des supermarchés aux États-Unis
+
+1. **Dimension de la commande** : Quel est le montant moyen de la transaction et le taux de connexion de chaque commande ? Quelle est la relation entre le montant de la commande et le nombre d’articles commandés ? Quel est le prix total et le bénéfice de chaque commande ?
+
+   La relation entre le montant de la commande et le nombre d'articles dans la commande peut refléter les caractéristiques du comportement d’achat du client. L'analyse de ces indicateurs peut aider les entreprises à comprendre les caractéristiques et les tendances du comportement d'achat des clients, orientant ainsi les stratégies de vente et les activités marketing de l'entreprise. Par exemple, s'il existe une forte corrélation positive entre le montant de la commande et le nombre de produits, l'entreprise peut prendre certaines mesures pour encourager les clients à acheter davantage de produits, telles que la lancement de réductions sur les forfaits, les ventes combinées, etc. Si le taux combiné est faible, cela peut accroître la volonté des clients d'acheter plusieurs produits par le biais de ventes liées, d'activités promotionnelles, etc., augmentant ainsi les ventes.
+
+2. **Dimension client** : Quel est le prix unitaire par client ? Quelle est la relation entre le montant de la consommation du client et le nombre de pièces consommées ? En utilisant le modèle RFM pour stratifier les utilisateurs, pouvons-nous voir le cycle de vie du client et le cycle d'achat ?
+
+   En tant que modèle d'analyse du comportement de consommation dans le domaine de la gestion de la relation client, le modèle RFM comprend trois variables : le moment de l'achat récent R (Récence), la fréquence d'achat F (Fréquence) et le montant de l'achat M (Monétaire). En analysant le nombre de jours dans l'intervalle de temps, plus la valeur est petite, plus la probabilité d'achat répété du client est grande et plus la valeur du client est élevée. F représente le nombre de fois que le client achète des marchandises au cours de la période. Plus l'achat est élevé. fréquence, plus le client est fidèle. M représente le montant total de l'achat. Le montant de l'achat et la fidélité du client sont également directement proportionnels, de sorte que la valeur du client peut être obtenue en analysant le score RFM.
+
+3. **Dimension du produit** : Le positionnement prix du produit est-il élevé ou bas ? Quelle gamme de prix de produits se vend le mieux ? Quel niveau de prix génère réellement le plus de ventes ?
+
+   Les ventes par segment révèlent non seulement les catégories de produits les plus populaires, mais soulignent également les domaines dans lesquels la demande du marché n'est pas entièrement satisfaite.
+
+4. **Dimension temporelle** : Quelle est la tendance des ventes pour chaque mois/jour et quelle est l'analyse du taux de croissance (ou du taux de déclin) ? Quel a pu être l’impact ?
+
+   En analysant la répartition des données de vente sur différents jours, les entreprises peuvent optimiser la préparation des stocks pour faire face aux pics de trafic client. L'analyse peut également guider la planification de campagnes marketing, telles que l'offre de promotions spéciales pendant les périodes de baisse attendue des ventes.
+
+5. **Dimension géographique** : De quels pays proviennent principalement les clients ? Quel pays est le principal marché étranger ? Dans quel pays les clients ont le pouvoir d'achat moyen le plus élevé ?
+
+   Cette analyse peut examiner les différences de ventes par région en raison de la densité de population, du pouvoir d'achat des clients ou de la commodité géographique. Une analyse plus approfondie peut également identifier les domaines dans lesquels il existe une plus grande demande pour un produit ou un service spécifique, ce qui peut indiquer des opportunités d'expansion ou une pénétration accrue du marché.
+
+### 1.3.2 Comparaison des supermarchés aux États-Unis et au Myanmar
+
+1. **Comparaison des prix et des marges bénéficiaires** : Comparer les prix des produits et les marges bénéficiaires dans les deux pays peut aider les entreprises à comprendre la sensibilité aux prix et la compétitivité des différents marchés.
+
+2. **Part de marché et potentiel de croissance** : En analysant les données de ventes, vous pouvez comprendre la part de marché et le potentiel de croissance de l'entreprise sur les deux marchés. Cela permet d'identifier et de prioriser les opportunités d'expansion du marché.
+
+3. **Environnement économique et comportement des consommateurs** : En comparant les données de ventes de deux pays, nous pouvons comprendre l'environnement économique, le niveau de revenus des consommateurs et le pouvoir d'achat des pays respectifs, fournissant ainsi une référence pour la formulation de stratégies de marché.
+
+
+```{r include = FALSE}
+data_usa <- read_csv("superstore.csv")
+head(data_usa)
+```
+
+```{r include = FALSE}
+data_mya <- read_delim("WalmartSQL repository.csv", 
+    delim = ";", escape_double = FALSE, trim_ws = TRUE)
+head(data_mya)
+```
+
+# 2 Exploration
+
+## 2.1 Dimension de la commande
+
+### 2.1.1 Calcul des montants moyens des transactions
+
+```{r}
+# Calculer le montant moyen des transactions pour chaque sous-catégorie et les classer par ordre décroissant du montant moyen des transactions.
+average_transaction <- data_usa %>%
+  group_by(`Sub-Category`) %>%
+  summarise(Average_Transaction_Amount = mean(Sales, na.rm = TRUE)) %>%
+  arrange(desc(Average_Transaction_Amount))
+
+# Créer des diagrammes à barres pour afficher les résultats du tri
+bar_plot <- ggplot(average_transaction, aes(x = reorder(`Sub-Category`, -Average_Transaction_Amount), y = Average_Transaction_Amount)) +
+  geom_bar(stat = "identity", fill = "blue") + 
+  labs(
+    title = "Average Transaction Amount by Sub-Category",
+    y = "Average Transaction Amount",
+    x = "Sub-Category"
+  ) +
+  theme(axis.text.x = element_text(angle = 65, vjust = 0.6)) # Ajuster l'angle et la position des étiquettes de l'axe des x
+
+bar_plot
+
+```
+
+- La sous-catégorie Copieurs a la valeur moyenne de transaction la plus élevée, soit plus de 1 500, ce qui suggère que les copieurs sont des articles plus rentables ou que les clients ont tendance à choisir des produits de plus grande valeur lorsqu'ils font des achats.
+- Les sous-catégories Machines et Tables affichent également des valeurs moyennes de transaction plus élevées, mais nettement inférieures à celles des Copieurs. Cela peut refléter des stratégies de prix ou des habitudes d'achat des clients sur le marché pour les produits de ces catégories.
+- La plupart des autres sous-catégories, telles que la papeterie (attaches) et les étiquettes, ont une valeur moyenne de transaction inférieure à 500, ce qui peut s'expliquer par le prix unitaire inférieur de ces articles ou par le fait que les clients les achètent généralement en plus petites quantités.
+- Ce graphique montre clairement la valeur moyenne de transaction des différentes sous-catégories, ce qui nous aide à comprendre la performance du marché et le comportement d'achat des clients pour chaque catégorie. Pour les sous-catégories dont le montant moyen des transactions est élevé, les entreprises peuvent envisager des stratégies telles que l'offre de forfaits à prix réduit ou de services de crédit afin d'augmenter les ventes et d'améliorer la satisfaction des clients. Pour les sous-catégories dont le montant moyen des transactions est plus faible, l'entreprise peut inciter les clients à acheter davantage d'articles par le biais d'offres groupées ou d'activités promotionnelles.
+
+
+### 2.1.2 Calcul du montant total de la commande et de la rentabilité
+
+```{r}
+# Tout d'abord, nous devons calculer le total des ventes et des bénéfices pour chaque sous-catégorie.
+category_summary <- data_usa %>%
+  group_by(`Sub-Category`) %>%
+  summarise(Total_Sales = sum(Sales, na.rm = TRUE),
+            Total_Profit = sum(Profit, na.rm = TRUE)) %>%
+  arrange(desc(Total_Sales)) # Par ordre décroissant des ventes totales
+
+# Créer un diagramme à barres bi-axial
+p <- ggplot(category_summary, aes(x = reorder(`Sub-Category`, Total_Sales))) +
+  geom_bar(aes(y = Total_Sales, fill = "Total Sales"), stat = "identity", position = "dodge") +
+  geom_bar(aes(y = Total_Profit, fill = "Total Profit"), stat = "identity", position = "dodge") +
+  scale_y_continuous(
+    "Total Sales",
+    sec.axis = sec_axis(~ ., name = "Total Profit", breaks = seq(-50000, 50000, by = 10000))
+  ) +
+  labs(title = "Total Sales and Profit by Sub-Category",
+       x = "Sub-Category", y = "Total Sales",
+       fill = "Bar Type") + # Ajouter une légende pour le type de barre
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    axis.text.x = element_text(angle = 65, vjust = 0.6)
+  )
+
+# Personnaliser les couleurs des barres
+p + scale_fill_manual(values = c("Total Sales" = "steelblue", "Total Profit" = "firebrick"))
+
+```
+
+- La sous-catégorie des téléphones a été la plus performante en termes de ventes totales, ce qui indique que cette catégorie est très populaire sur le marché et qu'elle enregistre de bons résultats.
+- La sous-catégorie Copieurs a été la plus performante en termes de bénéfices et peut avoir eu des marges plus élevées.
+- Les sous-catégories Fournitures et Tables ont enregistré des pertes, comme le montre le graphique en rouge, ce qui pourrait signifier que le contrôle des coûts dans ces catégories doit être amélioré ou que les stratégies de vente doivent être ajustées.
+- La plupart des sous-catégories ont réalisé un bénéfice, mais le niveau de bénéfice varie, ce qui peut refléter les marges et les structures de coûts des différents produits.
+
+
+### 2.1.3 Part de marché et potentiel de croissance
+
+#### 2.1.3.1  Calcul de la part de marché
+
+```{r}
+#USA
+# Calculer la part de marché
+market_share <- data_usa %>%
+  group_by(`Sub-Category`) %>%
+  summarise(total_sales = sum(Sales, na.rm = TRUE)) %>%
+  mutate(market_share = total_sales / sum(total_sales) * 100) %>%
+  arrange(desc(market_share))
+
+# : : Tracer des histogrammes de parts de marché
+market_share_plot <- ggplot(market_share, aes(x = reorder(`Sub-Category`, -market_share), y = market_share, fill = `Sub-Category`)) +
+  geom_bar(stat = "identity") +
+  labs(title = "USA Market Share by Sub-Category", x = "Sub-Category", y = "Market Share (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+market_share_plot
+
+```
+- La sous-catégorie des téléphones arrive en tête en termes de parts de marché, avec une part de plus de 15 %, ce qui suggère une forte demande de produits téléphoniques sur le marché américain.
+- Les sous-catégories des chaises et des classeurs suivent avec des parts de marché d'un peu moins de 10 % chacune, ce qui reflète probablement la demande constante de mobilier et de fournitures de bureau sur le marché.
+- D'autres sous-catégories telles que le stockage, les copieurs et les appareils ménagers ont des parts de marché plus faibles, mais cela ne signifie pas qu'elles n'ont pas de potentiel de croissance. La faible part de marché peut être due à une forte concurrence sur le marché ou à la nature du segment.
+
+
+
+```{r}
+# Calculer les ventes totales et la part de marché pour chaque ligne de produits
+market_share_mya <- data_mya %>%
+  group_by(product_line) %>%
+  summarise(Total_Sales = sum(total, na.rm = TRUE)) %>%
+  mutate(Market_Share = Total_Sales / sum(Total_Sales) * 100) %>%
+  arrange(desc(Market_Share))
+
+# Visualiser la part de marché sous forme de diagramme circulaire et montrer les pourcentages
+ggplot(market_share_mya, aes(x = "", y = Market_Share, fill = product_line)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  theme(legend.title = element_blank()) +
+  labs(fill = "Product Line") +
+  guides(fill = guide_legend(reverse = TRUE)) +
+  labs(title = "Market Share by Product Line in Myanmar") +
+  geom_text(aes(label = sprintf("%.1f%%", Market_Share)), position = position_stack(vjust = 0.5))
+
+```
+
+- La ligne de produits Sports et voyages détient une part de marché de 17,1 %, ce qui indique une demande stable pour les produits liés aux activités de loisirs au Myanmar.
+- Les accessoires électroniques et les accessoires pour la maison et le style de vie détiennent chacun 16,8 % du marché, ce qui démontre l'importance de ces produits dans la vie de tous les jours.
+- Le secteur de la santé et de la beauté suit avec 16,7 %, reflétant l'intérêt des consommateurs pour les produits de soins personnels et de bien-être.
+- Les produits alimentaires et les boissons sont légèrement en tête avec 17,4 %, ce qui est peut-être lié aux besoins de base du mode de vie et aux habitudes de consommation.
+- Les accessoires de mode, avec 15,2 %, ont la part la plus faible de toutes les catégories, mais restent un segment de marché à ne pas négliger.
+
+---
+
+## 2.2 Dimension du client
+
+### 2.2.1 Extraire les données relatives aux clients
+
+#### 2.2.1.1 Fonction d'assistance
+
+```{r}
+# Obtenir le quart
+get_custom_quarter <- function(date) {
+  month <- as.POSIXlt(date)$mon + 1
+  if (month %in% 1:3) {
+    return("Q1")
+  } else if (month %in% 4:6) {
+    return("Q2")
+  } else if (month %in% 7:9) {
+    return("Q3")
+  } else if (month %in% 10:12) {
+    return("Q4")
+  } else {
+    return("Unknown")
+  }
+}
+
+# Obetnir semaine
+get_custom_week <- function(date) {
+  week_of_year <- strftime(date, format = "%U")
+  return(week_of_year)
+}
+```
+
+#### 2.2.1.2 Traitement des données aux Birmanie, soyez connecté au client
+
+```{r}
+client_usa <- data_usa %>%
+  select(`Customer ID`, `Order Date`, `Order ID`, Sales, Quantity) %>%
+  group_by(`Customer ID`, `Order Date`, `Order ID`) %>%
+  summarise(quantity = sum(Quantity, na.rm = TRUE),
+            total = sum(Sales, na.rm = TRUE)) %>%
+  ungroup() %>%
+  transmute(customer_id = `Customer ID`,
+            order_id = `Order ID`,
+            order_date = as.Date(`Order Date`, format = "%d-%m-%y"),
+            quantity = quantity,
+            total = total)
+
+client_usa$quarter <- sapply(client_usa$order_date, get_custom_quarter)
+
+client_usa$week <- sapply(client_usa$order_date, get_custom_week)
+```
+### 2.2.2 Traitement des données aux États-Unis, soyez connecté au client
+
+```{r}
+client_mya <- data_mya %>%
+  select(quantity, total, dtme, invoice_id) %>%
+  transmute(order_id = invoice_id,
+            order_date = dtme,
+            quantity = quantity,
+            total = total)
+
+client_mya$quarter <- sapply(client_mya$order_date, get_custom_quarter)
+
+client_mya$week <- sapply(client_mya$order_date, get_custom_week)
+```
+
+### 2.2.3 Analyse du prix unitaire client
+
+#### 2.2.3.1 Aperçu annuel des États-Unis et du Myanmar
+
+```{r}
+client_unit_year_usa <- client_usa %>%
+  group_by(year = format(order_date, "%Y")) %>%
+  summarise(client_unit = sum(total) / n())
+
+client_unit_year_mya <- client_mya %>%
+  group_by(year = format(order_date, "%Y")) %>%
+  summarise(client_unit = sum(total) / n())
+```
+
+```{r}
+
+max_y <- (max(max(client_unit_year_usa$client_unit), max(client_unit_year_mya$client_unit)) %/% 100 + 1.5) * 100
+
+bar_client_unit_usa <- ggplot(client_unit_year_usa, aes(x = year, y = client_unit)) +
+  geom_bar(stat = "identity", fill = brewer.pal(3, "Set1")[1], alpha = 0.7, width = 0.5) +
+  labs(title = "Average Client Unit by Year (USA)", x = "Year", y = "Average Client Unit") +
+  coord_cartesian(ylim = c(0, max_y)) +
+  scale_y_continuous(expand = c(0, 0)) + 
+  theme(plot.title = element_text(size = 12)) + 
+  geom_text(aes(label = round(client_unit, digits = 1)), 
+              size = 3,
+              vjust = -0.5,
+              color = "black")
+  
+
+bar_client_unit_mya <- ggplot(client_unit_year_mya, aes(x = year, y = client_unit)) +
+  geom_bar(stat = "identity", fill = brewer.pal(3, "Set1")[2], alpha = 0.7, width = 0.5) +
+  labs(title = "Average Client Unit by Year (MYA)", x = "Year", y = "Average Client Unit") +
+  coord_cartesian(ylim = c(0, max_y)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme(plot.title = element_text(size = 12)) + 
+  geom_text(aes(label = round(client_unit, digits = 1)), 
+              size = 3,
+              vjust = -0.5,
+              color = "black")
+
+grid.arrange(bar_client_unit_usa, bar_client_unit_mya, nrow = 1) 
+
+```
+
+Le prix unitaire client fait référence au montant moyen dépensé par chaque client dans une activité d'achat ou de consommation.
+
+Cela montre que le prix unitaire par client aux États-Unis a eu tendance à être retiré des rayons entre 2014 et 2017, mais il était également plus élevé que le prix unitaire par client au Myanmar en 2019.
+
+### 2.2.4 La relation entre la quantité achetée par le client et le prix total
+
+```{r}
+client_mya_total_quantity <- client_mya %>%
+  select(total = total,
+         quantity = quantity)
+
+client_usa_total_quantity <- client_usa %>%
+  filter(total <= 1500 &
+           total > quantile(total, 0.05) & 
+           total < quantile(total, 0.95) & 
+           quantity <= 11 &
+           quantity > quantile(quantity, 0.05) & 
+           quantity < quantile(quantity, 0.95) ) %>%
+  select(total = total,
+         quantity = quantity)
+
+boxplot_usa <-ggplot(data = client_usa_total_quantity, mapping = aes(x = quantity, y = total)) + 
+  geom_boxplot(aes(group = cut_width(quantity, 1)), fill = brewer.pal(3, "Set1")[1], alpha = 0.7) +
+  labs(title = "Relationship between Quantity and Total (USA)",
+       x = "quantity",
+       y = "total (USD)") +
+  scale_x_continuous(breaks = seq(0, 10, by = 1), limits = c(2.5, 10.5)) +
+  scale_y_continuous(limits = c(0, 1000)) + 
+  theme(plot.title = element_text(size = 10))
+
+boxplot_mya <- ggplot(data = client_mya_total_quantity, mapping = aes(x = quantity, y = total)) + 
+  geom_boxplot(aes(group = cut_width(quantity, 1)), fill = brewer.pal(3, "Set1")[2], alpha = 0.7) +
+  labs(title = "Relationship between Quantity and Total (MYA)",
+       x = "quantity",
+       y = "total (USD)")+
+  scale_x_continuous(breaks = seq(0, 10, by = 1), limits = c(2.5, 10.5)) + 
+  theme(plot.title = element_text(size = 10))
+
+
+grid.arrange(boxplot_usa, boxplot_mya, ncol = 2)
+```
+On voit clairement que le montant total des achats des clients augmente à mesure que la quantité achetée augmente. Dans le même temps, le niveau du montant total des achats des clients américains fluctue beaucoup plus que celui du Myanmar.
+
+### 2.2.5 RFM Model
+
+```{r}
+assign_label <- function(value, median_value) {
+  ifelse(value <= median_value, "Low", "High")
+}
+
+
+min_max_normalize <- function(x) {
+  (x - min(x)) / (max(x) - min(x))
+}
+```
+
+
+```{r}
+max_date <- max(client_usa$order_date)
+
+rfm_data <- client_usa %>%
+  group_by(customer_id) %>%
+  summarise(
+    total_days = as.numeric(difftime(max(order_date), min(order_date), units = "days")),
+    recency = as.numeric(min(difftime(max_date, order_date, units = "days"), na.rm = TRUE)),
+    frequency = n(),
+    monetary = sum(total, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  filter(recency < 547 & total_days < 547)
+
+rfm_data <- rfm_data %>%
+  mutate(
+    r_score = ntile(recency, 2),
+    f_score = ntile(frequency, 2),
+    m_score = ntile(monetary, 2)
+  )
+
+rfm_data <- rfm_data %>%
+  mutate(
+    segment = paste0("R", r_score, "F", f_score, "M", m_score)
+  )
+
+head(rfm_data)
+
+
+
+rfm_to_customer_segment <- function(rfm_label) {
+  segment_map <- c(
+    "R1F1M1" = "New Customers",
+    "R1F1M2" = "Important Deepening Customers", 
+    "R1F2M1" = "Potential customers",
+    "R1F2M2" = "Important Value Customers",
+    "R2F1M1" = "Churned Customers",
+    "R2F1M2" = "Important Retention Customers",
+    "R2F2M1" = "Average Maintenance Customers",
+    "R2F2M2" = "Important Win-Back Customers"
+  )
+
+  customer_segment <- segment_map[rfm_label]
+  
+  return(customer_segment)
+}
+
+rfm_data$segment <- rfm_to_customer_segment(rfm_data$segment)
+
+```
+
+```{r}
+
+plot_ly(x = rfm_data$recency,
+        y = rfm_data$frequency,
+        z = rfm_data$monetary,
+        type = "scatter3d",
+        mode = "markers",
+        color = rfm_data$segment,
+        hoverinfo = "text",
+        marker = list(size = 5)) %>% 
+  layout(
+    scene = list(
+      xaxis = list(title = "Recency"),
+      yaxis = list(title = "Frequency"),
+      zaxis = list(title = "Monetary")
+      ),
+    title = "Model RFM"
+)
+
+```
+
+Le modèle RMF est un modèle d'analyse client utilisé pour classer et évaluer les clients afin de développer des stratégies marketing personnalisées et de gérer les relations clients. Le nom du modèle RMF vient de ses trois indicateurs clés : l'heure du dernier achat (Recency), la fréquence d'achat (Frequency) et le montant de la consommation (Monétaire).
+
+Selon le modèle RMF, les utilisateurs peuvent être divisés en 8 poids et nous pouvons nous concentrer sur les clients correspondants en fonction de la stratégie de développement du supermarché.
+
+---
+
+## 2.3 Dimension de "produit" au marché Américain
+
+We want to clean the data in the dataset US
+
+```{r}
+product_us = data_usa %>%
+  select(`Product ID`, Category, `Sub-Category`, Sales, Quantity, Profit) %>% #choose the concerned fields
+  group_by(Category, `Sub-Category`, `Product ID`, Profit) %>% #group all the lines by the 3 fields
+  summarise(quantity = sum(Quantity, na.rm = TRUE),
+            total = sum(Sales, na.rm = TRUE),
+            unit_price = total / quantity) %>% #delete the null cell and calculate the unit_price of a product, the sales and the total income
+  ungroup() %>%
+  transmute(product_id = `Product ID`,
+            category = `Category`,
+            sub_category = `Sub-Category`,
+            unit_price = unit_price,
+            quantity = quantity,
+            total = total,
+            profit = Profit) #form a new table and use it later
+#include the profit, and then compare it with the profit in the table mya
+
+product_us #print the data frame 
+```
+
+Nous voulons nettoyer les données de l'ensemble de données mya. Nous conservons les champs suivants : product_id, category, unit_price, quantity, total, profit. Une chose à noter est que le « invoice_id » représente le « product_id ».
+
+```{r}
+product_mya = data_mya %>%
+  select(product_line, invoice_id, unit_price, quantity, total, gross_income, gross_margin_pct) %>% #choose the concerned fields
+  group_by(product_line, invoice_id, unit_price) %>% #group all the lines by the 3 fields
+  summarise(quantity = sum(quantity, na.rm = TRUE), 
+            total = sum(total, na.rm = TRUE), 
+            profit = gross_income * gross_margin_pct) %>% #"na.rm" deletes the null cell and calculate the total income and the sales  
+  ungroup() %>%
+  transmute(product_id = invoice_id,
+            category = product_line,
+            unit_price = unit_price,
+            quantity = quantity,
+            total = total,
+            profit = profit
+            ) #form a new table and use it later
+
+product_mya
+```
+
+### 2.3.1 La relation entre les ventes et le prix répond aux 2 questions : Quelle gamme de prix de produits se vend le mieux ? Quel niveau de prix génère réellement le plus de ventes ?
+
+Nous pouvons voir que les produits moins chers que 500\$ se vendent mieux. En d'autres termes, la fourchette de prix 0-500\$ est la meilleure. Mais en fait, la baisse du prix ne génère pas le plus de ventes. Il y a beaucoup de points rassemblés dans le coin inférieur gauche.
+
+
+```{r}
+ggplot(product_us, aes(x = unit_price, y = quantity)) +
+  geom_point(color = "black") +
+  labs(title = "The relation between the sales and the price (US)",
+       x = "product_unit_price ($)",
+       y = "sales (pcs)") +
+  theme_minimal() +
+  scale_x_continuous(breaks = seq(0, 3500, by = 200)) #Modify the x-axis scale range and interval, to make it easier to read.
+
+  
+```
+
+### 2.3.2 La distribution des prix et des bénéfices est utile pour comprendre la sensibilité au prix et la compétitivité des différents marchés. Il est évident que dans les deux pays, un prix plus élevé entraîne un bénéfice plus important, même s'il est plus difficile de trouver la tendance des points bleus (les produits aux États-Unis).
+
+#### 2.3.2.1 Sensibilité au prix : La sensibilité au prix du marché peut être comprise en examinant la distribution et les tendances des prix des produits. 
+
+
+Sur les marchés où la sensibilité au prix est élevée, on observe généralement une large distribution des prix des produits et des marges bénéficiaires plus faibles, car les consommateurs ont tendance à préférer les produits moins chers. À l'instar du marché américain
+
+À l'inverse, sur les marchés où la sensibilité au prix est faible, la distribution des prix des produits est généralement plus étroite et les marges bénéficiaires plus élevées. C'est le cas du marché du MYA.
+
+
+#### 2.3.2.2 La compétitivité : La compétitivité du marché peut être appréhendée en examinant la distribution et les tendances des bénéfices sur les produits. 
+
+
+Sur les marchés très concurrentiels, les bénéfices sur les produits ont tendance à être concentrés, car les concurrents s'efforcent de baisser les prix pour attirer les consommateurs, réduisant ainsi les marges bénéficiaires des entreprises. À l'instar du marché américain
+
+Sur les marchés moins concurrentiels, les bénéfices sur les produits ont tendance à être plus largement répartis, car les entreprises disposent d'une plus grande flexibilité en matière de fixation des prix et peuvent maintenir des marges bénéficiaires relativement plus élevées. Tout comme le marché du MYA.
+
+```{r}
+ggplot()+
+  geom_point(data = product_us, aes(x = unit_price, y = profit, color = 'US'))+
+  geom_point(data = product_mya, aes(x = unit_price, y = profit, color = 'MYA'))+
+  labs(title = "The distribution of the unit_price and the profit in 2 countries (US and MYA)",
+       x = "product_unit_price",
+       y = "profit") +
+  geom_smooth(data = product_us, aes(x = unit_price, y = profit), method = "lm", se = FALSE, color = "blue") +
+  geom_smooth(data = product_mya, aes(x = unit_price, y = profit), method = "lm", se = FALSE, color = "red") +
+  theme_minimal() +
+  xlim(0, 300) +  # limit the range of x
+  ylim(-250, 250)  
+```
+
+## 2.4 dimension temporelle
+Dans la dimension temporelle, nous devons analyser les questions suivantes concernant les données des supermarchés américains:
+
+Quelle est la tendance des ventes chaque mois et quelle est l’analyse du taux de croissance (ou du taux de baisse)? Quel a pu être l’impact ?
+
+### 2.4.1 tendances des ventes mensuelles
+Afin de voir clairement la tendance des ventes mensuelles, nous allons tracer un graphique des ventes mensuelles :
+
+```{r}
+# Nettoyage des données: convertir le format de date
+data_usa$`Order Date` <- dmy(data_usa$`Order Date`)
+data_usa$`Ship Date` <- dmy(data_usa$`Ship Date`)
+
+# Convertir la date au format "année-mois-jour"
+data_usa$`Order Date` <- format(data_usa$`Order Date`, "%Y-%m-%d")
+data_usa$`Ship Date` <- format(data_usa$`Ship Date`, "%Y-%m-%d")
+
+```
+
+
+```{r, echo=FALSE, results='hide'}
+# Créer un champ YearMonth pour le regroupement
+data_usa$YearMonth <- format(as.Date(data_usa$`Order Date`), "%Y-%m")
+# Vérifiez s'il n'y a pas de données
+sum(is.na(data_usa$YearMonth))
+if (any(is.na(data_usa$YearMonth))) {
+  stop("There are NA values in the 'YearMonth' column after conversion. Check original data.")
+}
+
+# Résumer les données dans la table Monthly_sales
+monthly_sales <- data_usa %>%
+  group_by(YearMonth) %>%
+  summarise(
+    TotalProfit = sum(Profit, na.rm = TRUE),
+    TotalQuantity = sum(Quantity, na.rm = TRUE),
+    TotalSales = sum(Sales, na.rm = TRUE)
+  )
+
+# Convertissez YearMonth en objet date, assurez-vous qu'il n'y a pas d'erreurs
+monthly_sales$YearMonth <- as.Date(paste0(monthly_sales$YearMonth, "-01"))
+
+```
+
+```{r}
+# Utiliser ggplot pour dessiner un graphique linéaire - Profit et Quantity
+p1 <- ggplot(monthly_sales, aes(x = YearMonth)) +
+  geom_line(aes(y = TotalProfit, colour = "Profit"), size = 1) +
+  geom_line(aes(y = TotalQuantity, colour = "Quantity"), size = 1) +
+  scale_x_date(date_labels = "%Y", date_breaks = "1 year", minor_breaks = "1 month") +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$")) +
+  scale_color_manual(values = c(Profit = "goldenrod1", Quantity = "deepskyblue4")) +
+  labs(x = "Year and Month", y = "Value (in $)", title = "Monthly Profit and Quantity Trends") +
+  theme_minimal() +
+  theme(legend.title = element_blank(),
+        legend.position = "right",
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid.minor = element_line(colour = "gray80", linetype = "dashed"))
+
+# Utilisez ggplot pour dessiner un graphique linéaire - SumPrice
+p2 <- ggplot(monthly_sales, aes(x = YearMonth, y = TotalSales, colour = "SumPrice")) +
+  geom_line(size = 1) +
+  scale_x_date(date_labels = "%Y", date_breaks = "1 year", minor_breaks = "1 month") +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$")) +
+  scale_color_manual(values = c(SumPrice = "darkorange1")) +
+  labs(x = "Year and Month", y = "Value (in $)", title = "Monthly Sales Trends") +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid.minor = element_line(colour = "gray80", linetype = "dashed"))
+
+# Arrange the plots with some space between them
+#grid.arrange(p1, p2, ncol = 1, heights = c(1, 1), padding = unit(2, "cm"))
+
+# Imprimer des graphiques
+print(p1)
+print(p2)
+```
+Comme le montre la figure ci-dessus, il s'agit du graphique chronologique du volume des ventes et des bénéfices de 2014 à 2017, et du graphique chronologique des ventes de 2014 à 2017. Comme le montre la figure, les ventes et le volume des ventes suivent une tendance à la hausse, et il existe des fluctuations saisonnières évidentes au cours des quatre années, les meilleures conditions de vente étant enregistrées en juillet, octobre et novembre. Avec une activité en croissance constante, nous espérons prédire les ventes futures sur la base des ventes historiques sur 4 ans, afin de procéder à de futurs ajustements et configurations stratégiques.
+
+### 2.4.2 Modèle de série chronologique
+#### 2.4.2.1 Principes du modèle de séries chronologiques
+La prévision de séries chronologiques implique principalement d'organiser un ensemble de valeurs d'observation dans une série chronologique, traitant ainsi la série chronologique et utilisant des modèles mathématiques pour l'étendre davantage afin de prédire la tendance de développement à l'avenir.
+
+Les données sur les ventes des supermarchés présentées dans cet article sont des données chronologiques évidentes de janvier 2014 à décembre 2017. Elles présentent deux caractéristiques: l'une est que le chiffre ci-dessus montre que ses ventes présentent des changements cycliques saisonniers, et l'autre est que les ventes ont une tendance à la croissance stable. , la méthode des séries chronologiques peut donc être utilisée pour prédire les ventes futures sur la base de 4 années de données de ventes historiques.
+
+#### 2.4.2.2 Processus de modélisation
+Pour utiliser le modèle ARIMA d'analyse de séries chronologiques pour les prévisions de ventes trimestrielles en 2018, nous devons d'abord créer un objet de série chronologique, puis sélectionner les paramètres, l'ajustement et les prévisions du modèle ARIMA appropriés.
+
+```{r}
+# Extraire l'année et le mois
+data_usa$Year <- year(data_usa$`Order Date`)
+data_usa$Quarter <- quarter(data_usa$`Order Date`, with_year = TRUE)
+
+# Agréger les données au niveau du trimestre
+quarterly_sales <- data_usa %>%
+  group_by(Quarter) %>%
+  summarise(TotalSales = sum(Sales))
+
+# Créez un objet de série chronologique, les données commencent à partir de 2014, la fréquence est de 4 (données trimestrielles)
+sales_ts <- ts(quarterly_sales$TotalSales, start = c(2014, 1), frequency = 4)
+
+# Utilisation de l'ajustement automatique du modèle ARIMA
+fit <- auto.arima(sales_ts)
+
+# Informations récapitulatives sur la vue du modèle
+summary(fit)
+
+# Prévisions de ventes 2018 (4 trimestres)
+forecast <- forecast(fit, h = 4)
+
+# Afficher les résultats de la prédiction
+print(forecast)
+
+
+```
+Les données du tableau de prévisions montrent les éléments suivants:
+
+Prévisions ponctuelles: représente les ventes moyennes prévues pour chaque trimestre.
+Lo 80 et Hi 80:indiquent l'intervalle de confiance de 80%, ce qui signifie que la valeur prédite a une probabilité de 80% de se situer dans cette plage.
+Lo 95 et Hi 95:indiquent l'intervalle de confiance de 95%, ce qui signifie que la valeur prédite a une probabilité de 95% de se situer dans cette plage.
+
+
+#### 2.4.2.3 Les images suivantes sont des résultats de prédiction :
+
+```{r}
+# Visualisez les résultats des prédictions
+autoplot(forecast) + 
+  labs(title = "Forecasted Quarterly Sales for 2018", x = "Quarter", y = "Sales")
+```
+
+Nous analyserons le graphique prévisionnel généré, qui représente les ventes réelles de 2014 à 2017 et les ventes prévues pour 2018. L'image est discontinue entre le quatrième trimestre 2017 et le premier trimestre 2018 car la valeur prédite est une valeur de plage et il est impossible de trouver un point précis à connecter dans un graphique linéaire, mais cela n'affecte pas la lecture. Il est facile de voir sur l'image :
+
+Les données de ventes réelles de 2014 à 2017 ont montré des fluctuations saisonnières évidentes, qui peuvent être liées aux activités de vente ou au comportement d'achat des consommateurs au cours de saisons spécifiques.
+
+Les prévisions pour 2018 montrent une tendance à la hausse des ventes, mais l’incertitude des prévisions augmente avec le temps, ce qui se reflète dans l’élargissement de la zone ombrée.
+
+Comme le montre le graphique, même si la tendance générale est à la hausse, la croissance des ventes semble avoir ralenti certaines années, comme de 2016 à 2017.
+
+Cela peut être dû à plusieurs facteurs :
+
+-Saturation du marché : à mesure que le marché devient saturé, la croissance des ventes ralentira naturellement.
+
+-Concurrence intensifiée : L'entrée de nouveaux concurrents ou les stratégies concurrentielles des concurrents existants peuvent affecter les ventes.
+
+-Impact économique : les changements dans les conditions macroéconomiques, comme une récession ou une baisse de confiance des consommateurs, peuvent également affecter les ventes.
+
+
+#### 2.4.2.4 Suggestion：
+
+En réponse à ces tendances observées et aux changements potentiels du marché, la direction des supermarchés peut envisager les stratégies suivantes:
+
+1.Diversifier les produits et services: attirez plus de clients et répondez à la concurrence en introduisant de nouveaux produits ou services.
+
+2.Renforcer les activités de promotion et de marketing : Surtout pendant les périodes de faibles ventes, stimuler la consommation grâce à des promotions et des activités de marketing ciblées.
+
+3.Optimisez la gestion des stocks: ajustez les stocks en fonction des tendances des ventes et des changements saisonniers pour réduire le risque de surstocks et de ruptures de stock.
+
+4.Études de marché et de consommation: mener en permanence des études de marché et sur le comportement des consommateurs pour mieux comprendre les changements dans la demande du marché et les préférences des consommateurs.
+
+Grâce à ces analyses et stratégies, les supermarchés peuvent mieux s'adapter aux changements du marché, optimiser leur efficacité opérationnelle et stimuler la croissance des ventes.
+
+
+## 2.5 Dimension géographique
+Dans la dimension régionale, nous répondrons principalement aux questions suivantes : De quelles villes aux États-Unis proviennent principalement les clients ? Quelle ville a le pouvoir d’achat moyen des clients le plus élevé ?
+
+### 2.5.1 Répartition des clients dans les villes américaines
+```{r}
+# Filtrer les clients des États-Unis
+us_customers <- data_usa %>% filter(Country == "United States")
+
+# Calculer le nombre de clients par ville
+city_customers <- us_customers %>%
+  group_by(City) %>%
+  summarise(CustomerCount = n()) %>%
+  arrange(desc(CustomerCount))
+
+# Sélectionner les 10 premières villes par nombre de clients
+top_city_customers <- city_customers %>% top_n(10, CustomerCount)
+
+# Tracer le nombre de clients dans les 10 premières villes
+ggplot(top_city_customers, aes(x = reorder(City, CustomerCount), y = CustomerCount)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +
+  labs(
+    title = "Top 10 des villes par nombre de clients aux États-Unis",
+    x = "Ville",
+    y = "Nombre de clients (personnes)"
+  ) +
+  theme_minimal()
+```
+
+Nous pouvons voir que New York et Los Angeles sont les deux villes avec les ventes et le volume de clients les plus élevés. Dans le même temps, les ventes et le volume de clients de Philadelphie, San Francisco, Seattle, Houston et Chicago sont bien supérieurs à ceux des autres villes. villes. Nous devrions nous concentrer sur ces villes et élaborer un plan de vente.
+
+### 2.5.2 Pouvoir d’achat moyen des clients dans différentes villes
+Nous calculons les ventes moyennes des clients dans chaque ville pour déterminer quelle ville a le pouvoir d'achat moyen le plus élevé. Comme il y a trop de villes, notre image sélectionne uniquement les 10 premières villes à afficher.
+
+```{r}
+# Filtrer les clients des États-Unis
+us_customers <- data_usa %>% filter(Country == "United States")
+
+# Calculer les ventes moyennes par ville
+city_avg_sales <- us_customers %>%
+  group_by(City) %>%
+  summarise(AverageSales = mean(Sales, na.rm = TRUE)) %>%
+  arrange(desc(AverageSales))
+
+# Sélectionner les 10 villes avec les ventes moyennes les plus élevées
+top_city_avg_sales <- city_avg_sales %>% top_n(10, AverageSales)
+
+# Tracer le graphique
+ggplot(top_city_avg_sales, aes(x = reorder(City, AverageSales), y = AverageSales)) +
+  geom_bar(stat = "identity", fill = "salmon") +
+  coord_flip() +
+  labs(title = "Top 10 des villes par ventes moyennes aux États-Unis", x = "Ville", y = "Ventes moyennes (USD)") +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$")) +
+  theme_minimal()
+
+```
+
+Ce graphique montre les 10 villes des États-Unis avec les ventes moyennes les plus élevées. Chaque barre représente les ventes moyennes pour une ville donnée. Les noms des villes sont affichés sur l'axe vertical, tandis que les ventes moyennes sont affichées sur l'axe horizontal en dollars américains.
+
+D'après le graphique :
+
+Jamestown est la ville avec les ventes moyennes les plus élevées, bien au-dessus des autres villes.
+Cheyenne et Bellingham suivent respectivement en deuxième et troisième positions.
+D'autres villes comme Independence, Burbank, etc., sont également parmi les 10 premières.
+Ce graphique aide à comprendre quelles villes ont les clients qui dépensent le plus en moyenne par transaction, ce qui est précieux pour l'élaboration de stratégies de marketing et de vente.
+
+# 3 Conclusion 
+Dans ce projet d'analyse de données, nous avons utilisé le langage R pour effectuer une analyse approfondie des données de ventes des supermarchés. Nous avons analysé les supermarchés aux États-Unis et au Myanmar sous cinq dimensions, et avons finalement produit une application Shiny pour mettre en œuvre des graphiques interactifs sur le nombre de clients et le montant moyen des ventes dans différentes villes.
+
+## 3.1 Difficultés et défis
+
+Au cours du projet, nous avons rencontré les difficultés et défis suivants :
+
+- **Nettoyage et prétraitement des données** : en raison du format de date non uniforme dans l'ensemble de données, nous avons passé beaucoup de temps à nettoyer et à convertir le format de date afin d'effectuer une analyse de la dimension temporelle.
+- **Implémentation de graphiques interactifs** : Lorsque vous utilisez le framework Shiny pour implémenter des graphiques interactifs, vous devez traiter une grande quantité de données et garantir une vitesse de réponse, ce qui augmente la complexité dans une certaine mesure.
+- **Grand volume de données** : Le traitement et l'analyse de grandes quantités de données mettent à rude épreuve nos ressources informatiques, en particulier lors de l'exécution d'analyses interactives en temps réel.
+
+# 4 Annexe
+Cette page enregistre la répartition du travail de chaque membre de l'équipe. La description de poste de chaque membre est détaillée ci-dessous.
+
+## 4.1 Répartition du travail des membres
+
+### 4.1.1 Yifei
+
+Yifei était chargé de résoudre les problèmes liés aux dimensions temporelles et géographiques, et a utilisé Shiny pour créer des graphiques interactifs sur le nombre de clients et le montant moyen des ventes dans différentes villes. Les travaux spécifiques comprennent, sans toutefois s'y limiter :
+
+- Traitement des données dans la dimension temporelle, y compris la conversion du format de date et l'analyse des séries chronologiques.
+- Analyse liée à la dimension géographique et à la dimension temporelle
+- À l'aide du framework Shiny, développement de graphiques interactifs montrant le nombre de clients et le montant moyen des ventes dans différentes villes. La fonction d'ajustement du nombre de villes affichées et de sélection des différentes années via la barre de progression est mise en œuvre pour assurer l'interactivité dynamique du graphique.
+
