@@ -428,8 +428,8 @@ grid.arrange(boxplot_usa, boxplot_mya, ncol = 2)
 **Conclusion**
 
   - **Relation Positive** : Dans les deux pays, il y a une relation positive entre la quantité d'articles achetés et le prix total. Plus un client achète d'articles en une seule transaction, plus le prix total a tendance à être élevé.
-  - **Variabilité** : La variabilité du prix total est plus marquée dans le cas des USA, surtout pour des petites et grandes quantités, alors que pour la Malaisie, l'augmentation est plus linéaire et la variabilité augmente de manière plus prévisible.
-  - **Différences Régionales** : Les clients aux USA montrent une plus grande dispersion des prix pour une même quantité d'articles par rapport aux clients en Malaisie, ce qui peut être dû à des facteurs tels que les différences de prix des articles, les promotions ou les comportements d'achat.
+  - **Variabilité** : La variabilité du prix total est plus marquée dans le cas des USA, surtout pour des petites et grandes quantités, alors que pour MYA, l'augmentation est plus linéaire et la variabilité augmente de manière plus prévisible.
+  - **Différences Régionales** : Les clients aux USA montrent une plus grande dispersion des prix pour une même quantité d'articles par rapport aux clients en MYA, ce qui peut être dû à des facteurs tels que les différences de prix des articles, les promotions ou les comportements d'achat.
 
 ### 2.2.3 Comment classer les clients en fonction de leur comportement de consommation et formuler des stratégies correspondantes ?
 
