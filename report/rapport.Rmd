@@ -201,7 +201,7 @@ bar_plot <- ggplot(average_transaction, aes(x = reorder(`Sub-Category`, -Average
   geom_bar(stat = "identity", fill = "blue") + 
   labs(
     title = "Average Transaction Amount by Sub-Category",
-    y = "Average Transaction Amount",
+    y = "Average Transaction Amount (USD)",
     x = "Sub-Category"
   ) +
   theme(axis.text.x = element_text(angle = 65, vjust = 0.6)) # Ajuster l'angle et la position des étiquettes de l'axe des x
