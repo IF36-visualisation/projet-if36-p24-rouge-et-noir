@@ -140,9 +140,9 @@ Nous avons obtenu des informations complètes sur les transactions de vente dans
 
 ### 1.3.1 Analyse des performances des ventes des supermarchés aux États-Unis
 
-1. **Dimension de la commande** : Quel est le montant moyen de la transaction et le taux de connexion de chaque commande ? Quelle est la relation entre le montant de la commande et le nombre d’articles commandés ? Quel est le prix total et le bénéfice de chaque commande ?
+1. **Dimension de la commande** : Quel est le montant moyen de la transaction pour chaque sous-catégorie de produits? Comment cela reflète-t-il le comportement d'achat des clients dans différentes catégories?
 
-   La relation entre le montant de la commande et le nombre d'articles dans la commande peut refléter les caractéristiques du comportement d’achat du client. L'analyse de ces indicateurs peut aider les entreprises à comprendre les caractéristiques et les tendances du comportement d'achat des clients, orientant ainsi les stratégies de vente et les activités marketing de l'entreprise. Par exemple, s'il existe une forte corrélation positive entre le montant de la commande et le nombre de produits, l'entreprise peut prendre certaines mesures pour encourager les clients à acheter davantage de produits, telles que la lancement de réductions sur les forfaits, les ventes combinées, etc. Si le taux combiné est faible, cela peut accroître la volonté des clients d'acheter plusieurs produits par le biais de ventes liées, d'activités promotionnelles, etc., augmentant ainsi les ventes.
+   La catégorie des copieurs montre un montant moyen de transaction élevé, ce qui peut indiquer une préférence pour des équipements de bureau plus sophistiqués et coûteux, nécessaires pour les environnements de travail modernes. L'analyse de ce montant peut aider les entreprises à ajuster leurs stratégies de vente et marketing, telles que le ciblage de promotions ou de bundles pour augmenter le volume des ventes dans les catégories avec des montants de transaction inférieurs.
 
 2. **Dimension client** : 
   - Quelles sont les unités de clients annuels moyens des supermarchés aux États-Unis et au Myanmar ?
@@ -167,7 +167,7 @@ Nous avons obtenu des informations complètes sur les transactions de vente dans
 
 1. **Comparaison des prix et des marges bénéficiaires** : Comparer les prix des produits et les marges bénéficiaires dans les deux pays peut aider les entreprises à comprendre la sensibilité aux prix et la compétitivité des différents marchés.
 
-2. **Part de marché et potentiel de croissance** : En analysant les données de ventes, vous pouvez comprendre la part de marché et le potentiel de croissance de l'entreprise sur les deux marchés. Cela permet d'identifier et de prioriser les opportunités d'expansion du marché.
+2. **Part de marché et potentiel de croissance** : Comprendre la part de marché des différentes catégories de produits aux États-Unis et au Viêt Nam et utiliser ces informations pour orienter les décisions stratégiques sur ces marchés.
 
 3. **Environnement économique et comportement des consommateurs** : En comparant les données de ventes de deux pays, nous pouvons comprendre l'environnement économique, le niveau de revenus des consommateurs et le pouvoir d'achat des pays respectifs, fournissant ainsi une référence pour la formulation de stratégies de marché.
 
@@ -215,48 +215,7 @@ bar_plot
 - La plupart des autres sous-catégories, telles que la papeterie (attaches) et les étiquettes, ont une valeur moyenne de transaction inférieure à 500, ce qui peut s'expliquer par le prix unitaire inférieur de ces articles ou par le fait que les clients les achètent généralement en plus petites quantités.
 - Ce graphique montre clairement la valeur moyenne de transaction des différentes sous-catégories, ce qui nous aide à comprendre la performance du marché et le comportement d'achat des clients pour chaque catégorie. Pour les sous-catégories dont le montant moyen des transactions est élevé, les entreprises peuvent envisager des stratégies telles que l'offre de forfaits à prix réduit ou de services de crédit afin d'augmenter les ventes et d'améliorer la satisfaction des clients. Pour les sous-catégories dont le montant moyen des transactions est plus faible, l'entreprise peut inciter les clients à acheter davantage d'articles par le biais d'offres groupées ou d'activités promotionnelles.
 
-
-### 2.1.2 Calcul du montant total de la commande et de la rentabilité
-
-```{r}
-# Tout d'abord, nous devons calculer le total des ventes et des bénéfices pour chaque sous-catégorie.
-category_summary <- data_usa %>%
-  group_by(`Sub-Category`) %>%
-  summarise(Total_Sales = sum(Sales, na.rm = TRUE),
-            Total_Profit = sum(Profit, na.rm = TRUE)) %>%
-  arrange(desc(Total_Sales)) # Par ordre décroissant des ventes totales
-
-# Créer un diagramme à barres bi-axial
-p <- ggplot(category_summary, aes(x = reorder(`Sub-Category`, Total_Sales))) +
-  geom_bar(aes(y = Total_Sales, fill = "Total Sales"), stat = "identity", position = "dodge") +
-  geom_bar(aes(y = Total_Profit, fill = "Total Profit"), stat = "identity", position = "dodge") +
-  scale_y_continuous(
-    "Total Sales",
-    sec.axis = sec_axis(~ ., name = "Total Profit", breaks = seq(-50000, 50000, by = 10000))
-  ) +
-  labs(title = "Total Sales and Profit by Sub-Category",
-       x = "Sub-Category", y = "Total Sales",
-       fill = "Bar Type") + # Ajouter une légende pour le type de barre
-  theme_minimal() +
-  theme(
-    legend.position = "right",
-    axis.text.x = element_text(angle = 65, vjust = 0.6)
-  )
-
-# Personnaliser les couleurs des barres
-p + scale_fill_manual(values = c("Total Sales" = "steelblue", "Total Profit" = "firebrick"))
-
-```
-
-- La sous-catégorie des téléphones a été la plus performante en termes de ventes totales, ce qui indique que cette catégorie est très populaire sur le marché et qu'elle enregistre de bons résultats.
-- La sous-catégorie Copieurs a été la plus performante en termes de bénéfices et peut avoir eu des marges plus élevées.
-- Les sous-catégories Fournitures et Tables ont enregistré des pertes, comme le montre le graphique en rouge, ce qui pourrait signifier que le contrôle des coûts dans ces catégories doit être amélioré ou que les stratégies de vente doivent être ajustées.
-- La plupart des sous-catégories ont réalisé un bénéfice, mais le niveau de bénéfice varie, ce qui peut refléter les marges et les structures de coûts des différents produits.
-
-
-### 2.1.3 Part de marché et potentiel de croissance
-
-#### 2.1.3.1  Calcul de la part de marché
+### 2.1.2 Calcul de la part de marché
 
 ```{r}
 #USA
@@ -276,6 +235,7 @@ market_share_plot <- ggplot(market_share, aes(x = reorder(`Sub-Category`, -marke
 market_share_plot
 
 ```
+
 - La sous-catégorie des téléphones arrive en tête en termes de parts de marché, avec une part de plus de 15 %, ce qui suggère une forte demande de produits téléphoniques sur le marché américain.
 - Les sous-catégories des chaises et des classeurs suivent avec des parts de marché d'un peu moins de 10 % chacune, ce qui reflète probablement la demande constante de mobilier et de fournitures de bureau sur le marché.
 - D'autres sous-catégories telles que le stockage, les copieurs et les appareils ménagers ont des parts de marché plus faibles, mais cela ne signifie pas qu'elles n'ont pas de potentiel de croissance. La faible part de marché peut être due à une forte concurrence sur le marché ou à la nature du segment.
