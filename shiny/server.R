@@ -56,8 +56,8 @@ server <- function(input, output) {
       labs(title = "The distribution of the unit_price and the profit in 2 countries (US and MYA)",
            x = "product_unit_price",
            y = "profit") +
-      geom_smooth(data = product_us, aes(x = unit_price, y = profit), method = "lm", se = FALSE, color = "skyblue") +
-      geom_smooth(data = product_mya, aes(x = unit_price, y = profit), method = "lm", se = FALSE, color = "salmon") +
+      geom_smooth(data = product_us, aes(x = unit_price, y = profit), method = "lm", se = FALSE, color = "blue") +
+      geom_smooth(data = product_mya, aes(x = unit_price, y = profit), method = "lm", se = FALSE, color = "red") +
       theme_minimal() +
       xlim(0, 300) +  # limit the range of x
       ylim(-250, 250) 
