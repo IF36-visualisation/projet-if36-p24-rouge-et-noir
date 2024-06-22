@@ -173,12 +173,12 @@ Nous avons obtenu des informations complètes sur les transactions de vente dans
 
 
 ```{r include = FALSE}
-data_usa <- read_csv("../data/superstore.csv")
+data_usa <- read_csv("data/superstore.csv")
 head(data_usa)
 ```
 
 ```{r include = FALSE}
-data_mya <- read_delim("../data/WalmartSQL repository.csv", 
+data_mya <- read_delim("data/WalmartSQL repository.csv", 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)
 head(data_mya)
 ```
@@ -618,7 +618,7 @@ product_mya
 ```
 
 ### 2.3.1 La relation entre les ventes et le prix 
-
+#### 2.3.1.1 L'édition de ggplot2
 Nous pouvons voir que les produits moins chers que 500\$ se vendent mieux. En d'autres termes, la fourchette de prix 0-500\$ est la meilleure. Mais en fait, la baisse du prix ne génère pas le plus de ventes. Il y a beaucoup de points rassemblés dans le coin inférieur gauche.
 
 
@@ -633,6 +633,8 @@ ggplot(product_us, aes(x = unit_price, y = quantity)) +
 
   
 ```
+#### 2.3.1.2 L'édition de shiny
+![unitPrice_sales](shiny/screen_capture/4.png)
 
 ### 2.3.2 La distribution des prix et des bénéfices 
 
