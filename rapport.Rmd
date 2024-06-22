@@ -268,6 +268,7 @@ ggplot(market_share_mya, aes(x = "", y = Market_Share, fill = product_line)) +
 - Le secteur de la santé et de la beauté suit avec 16,7 %, reflétant l'intérêt des consommateurs pour les produits de soins personnels et de bien-être.
 - Les produits alimentaires et les boissons sont légèrement en tête avec 17,4 %, ce qui est peut-être lié aux besoins de base du mode de vie et aux habitudes de consommation.
 - Les accessoires de mode, avec 15,2 %, ont la part la plus faible de toutes les catégories, mais restent un segment de marché à ne pas négliger.
+![Average Transaction Amount by Sub-Category](C:/Users/Gabriel/Desktop/UTT2024年上半年/IF36/R_czy.png)
 
 ---
 
@@ -918,4 +919,11 @@ Yifei était chargé de résoudre les problèmes liés aux dimensions temporelle
 - Traitement des données dans la dimension temporelle, y compris la conversion du format de date et l'analyse des séries chronologiques.
 - Analyse liée à la dimension géographique et à la dimension temporelle
 - À l'aide du framework Shiny, développement de graphiques interactifs montrant le nombre de clients et le montant moyen des ventes dans différentes villes. La fonction d'ajustement du nombre de villes affichées et de sélection des différentes années via la barre de progression est mise en œuvre pour assurer l'interactivité dynamique du graphique.
+
+### 4.1.2 Zhaoyang Chen
+
+Zhaoyang Chen était chargé de l'analyse des montants moyens des transactions et de la détermination des parts de marché. Les travaux spécifiques comprennent, sans toutefois s'y limiter :
+
+- Calcul des montants moyens des transactions pour chaque sous-catégorie et classement de ces montants par ordre décroissant. Création de diagrammes à barres pour visualiser ces informations.
+- Analyse des parts de marché pour diverses sous-catégories de produits en utilisant les données du marché américain, et visualisation des résultats à travers des histogrammes. Des analyses similaires ont été réalisées pour le marché de Myanmar, avec des visualisations sous forme de diagrammes circulaires pour afficher les parts de marché par ligne de produits.
 
