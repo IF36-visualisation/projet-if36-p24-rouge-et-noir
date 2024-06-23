@@ -1,14 +1,11 @@
 ---
-title: "Rapport
-————Découvrez la performance du chiffre d'affaires d’un supermarché"
+title: "Rapport --- découvrez la performance du chiffre d'affaires d’un supermarché"
 author: "LinZhifan, DaiYifei, Wuyuan, ChenZhaoyang"
 date: "2024-04-29"
 output:
   html_document: default
   pdf_document: default
 ---
-
-
 
 ```{r setup, include=FALSE}
 library(readr)
@@ -32,7 +29,9 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
 
 # 1 Proposition
+
 ## 1.1 Introduction
+
 Mon groupe envisage d'utiliser deux ensembles de données dans notre projet de cours. Le premier ensemble de données couvre les ventes d’une grande chaîne de supermarchés aux États-Unis de 2014 à 2017, et le deuxième ensemble de données couvre les ventes de Walmart Myanmar au premier trimestre 2019. Notre analyse se concentrera sur cinq dimensions : la commande, le client, le produit, la météo et l'emplacement. Nous analyserons principalement les données pertinentes des supermarchés américains, chercherons à comprendre les raisons possibles de la baisse du taux de croissance des ventes et proposerons des moyens d'augmenter les ventes. Dans le même temps, nous comparerons également les transactions entre les États-Unis et le Myanmar afin de mieux comprendre le marché et de fournir des données pour les stratégies de marché transfrontalières.
 
 ## 1.2 Donnée
@@ -144,12 +143,9 @@ Nous avons obtenu des informations complètes sur les transactions de vente dans
 
    La catégorie des copieurs montre un montant moyen de transaction élevé, ce qui peut indiquer une préférence pour des équipements de bureau plus sophistiqués et coûteux, nécessaires pour les environnements de travail modernes. L'analyse de ce montant peut aider les entreprises à ajuster leurs stratégies de vente et marketing, telles que le ciblage de promotions ou de bundles pour augmenter le volume des ventes dans les catégories avec des montants de transaction inférieurs.
 
-2. **Dimension client** : 
-  - Quelles sont les unités de clients annuels moyens des supermarchés aux États-Unis et au Myanmar ?
-  - Quelle est la relation entre le nombre d’articles achetés par un client en une seule transaction et le prix total ?
-  - Comment classer les clients en fonction de leur comportement de consommation et formuler des stratégies correspondantes ?
+2. **Dimension client** : Quelles sont les unités de clients annuels moyens des supermarchés aux États-Unis et au Myanmar ? Quelle est la relation entre le nombre d’articles achetés par un client en une seule transaction et le prix total ? Comment classer les clients en fonction de leur comportement de consommation et formuler des stratégies correspondantes ?
 
-   En tant que modèle d'analyse du comportement de consommation dans le domaine de la gestion de la relation client, le modèle RFM comprend trois variables : le moment de l'achat récent R (Récence), la fréquence d'achat F (Fréquence) et le montant de l'achat M (Monétaire). En analysant le nombre de jours dans l'intervalle de temps, plus la valeur est petite, plus la probabilité d'achat répété du client est grande et plus la valeur du client est élevée. F représente le nombre de fois que le client achète des marchandises au cours de la période. Plus l'achat est élevé. fréquence, plus le client est fidèle. M représente le montant total de l'achat. Le montant de l'achat et la fidélité du client sont également directement proportionnels, de sorte que la valeur du client peut être obtenue en analysant le score RFM.
+   Le modèle RFM en gestion de la relation client analyse trois variables : la récence (R), la fréquence (F) et le montant (M). Une valeur R faible indique une probabilité élevée de répétition d'achat et une grande valeur du client. Une fréquence d'achat élevée (F) signale une forte fidélité du client. Le montant total des achats (M) est proportionnel à la fidélité du client. Le score RFM permet ainsi d'estimer la valeur du client.
 
 3. **Dimension du produit** : Le positionnement prix du produit est-il élevé ou bas ? Quelle gamme de prix de produits se vend le mieux ? Quel niveau de prix génère réellement le plus de ventes ?
 
@@ -368,6 +364,7 @@ bar_client_unit_mya <- ggplot(client_unit_year_mya, aes(x = year, y = client_uni
 grid.arrange(bar_client_unit_usa, bar_client_unit_mya, nrow = 1)
 
 ```
+
 **"Client unit"** se réfère au nombre moyen d'articles achetés par un client en une seule transaction.
 
 **Analyse des Graphiques**:
@@ -412,6 +409,7 @@ boxplot_mya <- ggplot(data = client_mya_total_quantity, mapping = aes(x = quanti
 
 grid.arrange(boxplot_usa, boxplot_mya, ncol = 2)
 ```
+
 **Analyse des Graphiques**:
 
 **USA**
@@ -533,6 +531,8 @@ ggplot(segment_summary, aes(x = "", y = segment_percent, fill = segment)) +
             position = position_stack(vjust = 0.5))
 ```
 
+![RFM model](shiny/screen_capture/rfm.jpg)
+
 
 Le modèle RFM (Récence, Fréquence, Monétaire) est une technique de segmentation des clients utilisée en marketing pour analyser et regrouper les clients en fonction de leurs comportements d'achat. 
 
@@ -619,7 +619,9 @@ product_mya
 ```
 
 ### 2.3.1 La relation entre les ventes et le prix 
+
 #### 2.3.1.1 L'édition de ggplot2
+
 Nous pouvons voir que les produits moins chers que 500\$ se vendent mieux. En d'autres termes, la fourchette de prix 0-500\$ est la meilleure. Mais en fait, la baisse du prix ne génère pas le plus de ventes. Il y a beaucoup de points rassemblés dans le coin inférieur gauche.
 
 
@@ -634,21 +636,20 @@ ggplot(product_us, aes(x = unit_price, y = quantity)) +
 
   
 ```
+
 #### 2.3.1.2 L'édition de shiny
+
 ![unitPrice_sales](shiny/screen_capture/4.png)
 
 ### 2.3.2 La distribution des prix et des bénéfices 
 
 #### 2.3.2.1 Sensibilité au prix : la distribution et les tendances des prix  
 
-
 Sur les marchés où la sensibilité au prix est élevée, on observe généralement une large distribution des prix des produits et des marges bénéficiaires plus faibles, car les consommateurs ont tendance à préférer les produits moins chers. À l'instar du marché américain
 
 À l'inverse, sur les marchés où la sensibilité au prix est faible, la distribution des prix des produits est généralement plus étroite et les marges bénéficiaires plus élevées. C'est le cas du marché du MYA.
 
-
 #### 2.3.2.2 La compétitivité : la distribution et les tendances des bénéfices 
-
 
 Sur les marchés très concurrentiels, les bénéfices sur les produits ont tendance à être concentrés, car les concurrents s'efforcent de baisser les prix pour attirer les consommateurs, réduisant ainsi les marges bénéficiaires des entreprises. À l'instar du marché américain
 
@@ -667,14 +668,18 @@ ggplot()+
   xlim(0, 300) +  # limit the range of x
   ylim(-250, 250)  
 ```
+
 ![unitPrice_profit](shiny/screen_capture/5.png)
+---
 
 ## 2.4 dimension temporelle
+
 Dans la dimension temporelle, nous devons analyser les questions suivantes concernant les données des supermarchés américains:
 
 Quelle est la tendance des ventes chaque mois et quelle est l’analyse du taux de croissance (ou du taux de baisse)? Quel a pu être l’impact ?
 
 ### 2.4.1 tendances des ventes mensuelles
+
 Afin de voir clairement la tendance des ventes mensuelles, nous allons tracer un graphique des ventes mensuelles :
 
 ```{r}
@@ -746,15 +751,19 @@ p2 <- ggplot(monthly_sales, aes(x = YearMonth, y = TotalSales, colour = "SumPric
 print(p1)
 print(p2)
 ```
+
 Comme le montre la figure ci-dessus, il s'agit du graphique chronologique du volume des ventes et des bénéfices de 2014 à 2017, et du graphique chronologique des ventes de 2014 à 2017. Comme le montre la figure, les ventes et le volume des ventes suivent une tendance à la hausse, et il existe des fluctuations saisonnières évidentes au cours des quatre années, les meilleures conditions de vente étant enregistrées en juillet, octobre et novembre. Avec une activité en croissance constante, nous espérons prédire les ventes futures sur la base des ventes historiques sur 4 ans, afin de procéder à de futurs ajustements et configurations stratégiques.
 
 ### 2.4.2 Modèle de série chronologique
+
 #### 2.4.2.1 Principes du modèle de séries chronologiques
+
 La prévision de séries chronologiques implique principalement d'organiser un ensemble de valeurs d'observation dans une série chronologique, traitant ainsi la série chronologique et utilisant des modèles mathématiques pour l'étendre davantage afin de prédire la tendance de développement à l'avenir.
 
 Les données sur les ventes des supermarchés présentées dans cet article sont des données chronologiques évidentes de janvier 2014 à décembre 2017. Elles présentent deux caractéristiques: l'une est que le chiffre ci-dessus montre que ses ventes présentent des changements cycliques saisonniers, et l'autre est que les ventes ont une tendance à la croissance stable. , la méthode des séries chronologiques peut donc être utilisée pour prédire les ventes futures sur la base de 4 années de données de ventes historiques.
 
 #### 2.4.2.2 Processus de modélisation
+
 Pour utiliser le modèle ARIMA d'analyse de séries chronologiques pour les prévisions de ventes trimestrielles en 2018, nous devons d'abord créer un objet de série chronologique, puis sélectionner les paramètres, l'ajustement et les prévisions du modèle ARIMA appropriés.
 
 ```{r}
@@ -809,32 +818,34 @@ Comme le montre le graphique, même si la tendance générale est à la hausse, 
 
 Cela peut être dû à plusieurs facteurs :
 
--Saturation du marché : à mesure que le marché devient saturé, la croissance des ventes ralentira naturellement.
+- Saturation du marché : à mesure que le marché devient saturé, la croissance des ventes ralentira naturellement.
 
--Concurrence intensifiée : L'entrée de nouveaux concurrents ou les stratégies concurrentielles des concurrents existants peuvent affecter les ventes.
+- Concurrence intensifiée : L'entrée de nouveaux concurrents ou les stratégies concurrentielles des concurrents existants peuvent affecter les ventes.
 
--Impact économique : les changements dans les conditions macroéconomiques, comme une récession ou une baisse de confiance des consommateurs, peuvent également affecter les ventes.
+- Impact économique : les changements dans les conditions macroéconomiques, comme une récession ou une baisse de confiance des consommateurs, peuvent également affecter les ventes.
 
 
 #### 2.4.2.4 Suggestion：
 
 En réponse à ces tendances observées et aux changements potentiels du marché, la direction des supermarchés peut envisager les stratégies suivantes:
 
-1.Diversifier les produits et services: attirez plus de clients et répondez à la concurrence en introduisant de nouveaux produits ou services.
+1. Diversifier les produits et services: attirez plus de clients et répondez à la concurrence en introduisant de nouveaux produits ou services.
 
-2.Renforcer les activités de promotion et de marketing : Surtout pendant les périodes de faibles ventes, stimuler la consommation grâce à des promotions et des activités de marketing ciblées.
+2. Renforcer les activités de promotion et de marketing : Surtout pendant les périodes de faibles ventes, stimuler la consommation grâce à des promotions et des activités de marketing ciblées.
 
-3.Optimisez la gestion des stocks: ajustez les stocks en fonction des tendances des ventes et des changements saisonniers pour réduire le risque de surstocks et de ruptures de stock.
+3. Optimisez la gestion des stocks: ajustez les stocks en fonction des tendances des ventes et des changements saisonniers pour réduire le risque de surstocks et de ruptures de stock.
 
-4.Études de marché et de consommation: mener en permanence des études de marché et sur le comportement des consommateurs pour mieux comprendre les changements dans la demande du marché et les préférences des consommateurs.
+4. Études de marché et de consommation: mener en permanence des études de marché et sur le comportement des consommateurs pour mieux comprendre les changements dans la demande du marché et les préférences des consommateurs.
 
 Grâce à ces analyses et stratégies, les supermarchés peuvent mieux s'adapter aux changements du marché, optimiser leur efficacité opérationnelle et stimuler la croissance des ventes.
 
 
 ## 2.5 Dimension géographique
+
 Dans la dimension régionale, nous répondrons principalement aux questions suivantes : De quelles villes aux États-Unis proviennent principalement les clients ? Quelle ville a le pouvoir d’achat moyen des clients le plus élevé ?
 
 ### 2.5.1 Répartition des clients dans les villes américaines
+
 ```{r}
 # Filtrer les clients des États-Unis
 us_customers <- data_usa %>% filter(Country == "United States")
@@ -863,6 +874,7 @@ ggplot(top_city_customers, aes(x = reorder(City, CustomerCount), y = CustomerCou
 Nous pouvons voir que New York et Los Angeles sont les deux villes avec les ventes et le volume de clients les plus élevés. Dans le même temps, les ventes et le volume de clients de Philadelphie, San Francisco, Seattle, Houston et Chicago sont bien supérieurs à ceux des autres villes. villes. Nous devrions nous concentrer sur ces villes et élaborer un plan de vente.
 
 ### 2.5.2 Pouvoir d’achat moyen des clients dans différentes villes
+
 Nous calculons les ventes moyennes des clients dans chaque ville pour déterminer quelle ville a le pouvoir d'achat moyen le plus élevé. Comme il y a trop de villes, notre image sélectionne uniquement les 10 premières villes à afficher.
 
 ```{r}
@@ -898,6 +910,7 @@ D'autres villes comme Independence, Burbank, etc., sont également parmi les 10 
 Ce graphique aide à comprendre quelles villes ont les clients qui dépensent le plus en moyenne par transaction, ce qui est précieux pour l'élaboration de stratégies de marketing et de vente.
 
 # 3 Conclusion 
+
 Dans ce projet d'analyse de données, nous avons utilisé le langage R pour effectuer une analyse approfondie des données de ventes des supermarchés. Nous avons analysé les supermarchés aux États-Unis et au Myanmar sous cinq dimensions, et avons finalement produit une application Shiny pour mettre en œuvre des graphiques interactifs sur le nombre de clients et le montant moyen des ventes dans différentes villes.
 
 ## 3.1 Difficultés et défis
@@ -928,3 +941,10 @@ Zhaoyang Chen était chargé de l'analyse des montants moyens des transactions e
 - Calcul des montants moyens des transactions pour chaque sous-catégorie et classement de ces montants par ordre décroissant. Création de diagrammes à barres pour visualiser ces informations.
 - Analyse des parts de marché pour diverses sous-catégories de produits en utilisant les données du marché américain, et visualisation des résultats à travers des histogrammes. Des analyses similaires ont été réalisées pour le marché de Myanmar, avec des visualisations sous forme de diagrammes circulaires pour afficher les parts de marché par ligne de produits.
 
+### 4.1.3 Zhifan Lin
+
+J'ai effectué l'analyse des problèmes liés aux clients en utilisant le modèle RFM et en le présentant via le framework Shiny. Les travaux spécifiques incluent, sans toutefois s’y limiter :
+
+- Nettoyage des données, y compris la suppression des valeurs manquantes (NA) et des données clients présentant des écarts importants.
+- Analyse des comportements d'achat des clients et de leur valeur.
+- Développement de graphiques interactifs avec Shiny pour visualiser les scores RFM des clients.
