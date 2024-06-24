@@ -908,6 +908,9 @@ ggplot(top_city_avg_sales, aes(x = reorder(City, AverageSales), y = AverageSales
 
 ```
 
+![1](./shiny/screen_capture/1.jpg)
+
+
 Ce graphique montre les 10 villes des États-Unis avec les ventes moyennes les plus élevées. Chaque barre représente les ventes moyennes pour une ville donnée. Les noms des villes sont affichés sur l'axe vertical, tandis que les ventes moyennes sont affichées sur l'axe horizontal en dollars américains.
 
 D'après le graphique :
